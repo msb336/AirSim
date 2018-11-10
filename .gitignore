@@ -6,7 +6,17 @@
 *.user
 *.userosscache
 *.sln.docstates
+<<<<<<< 59c6e295cb79607f44836cd9ff45b0f1f032b2db
+<<<<<<< ae0cc5f1b552737faff646d48965c38c4b647863
 
+=======
+linux-build/
+Packages/
+Temp/
+>>>>>>> logger fix in progress
+=======
+
+>>>>>>> prep for pull request
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
