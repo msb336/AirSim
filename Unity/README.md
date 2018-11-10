@@ -27,7 +27,7 @@ This project is still in early development, expect some rough edges. We are work
 * Build the unity project: `build.cmd`.   
 * Additionally, there is a free environment `Windridge City` which you can download from [Unity Asset Store](https://assetstore.unity.com/packages/3d/environments/roadways/windridge-city-132222). And, of course, you can always create your own environment.
 
-#### Usage 
+## Usage 
 * Start Unity and click `Open project`. 
 * Select the folder `AirSim\Unity\UnityDemo`, and then hit the button `Select Folder`. 
 * In the bottom pane, Click on `Projects`->`Assets`->`Scenes`. Then, **Double-click** on `SimModeSelector`, `DroneDemo`, or `CarDemo`. 
@@ -42,7 +42,45 @@ Keys `0`, `1`, `2`, `3` are used to toggle windows of different camera views.
 * Recording simulation data:    
 Press *Record* button(Red button) located at the right bottom corner of the screen, to toggle recording of the simulation data. The recorded data can be found at `Documents\AirSim\(Date of recording)`
 
-#### Using Airsim API
+## Cross-Compiling to Linux
+While Airsim Projects cannot be built natively on Linux using the Unity engine at this time, Unity Editor on Windows does support compiling projects to Linux systems.
+After following the steps to build AirSim and Unity on Windows, do the following:
+
+#### Build Airsim in Linux
+* Open a new terminal window on your linux machine
+* Clone the repo: `git clone https://github.com/Microsoft/AirSim.git`, and go the AirSim directory by `cd AirSim`. 
+* Run `setup.sh ` and subsequently `build.sh` from the the terminal.
+
+### Package UnityDemo Binary
+
+#### Install Necessary Components
+In order to package your project for linux, the **Linux Build Support** Unity add-on must be installed.
+* Open **Unity Hub**, and click the **Add component** button in the dropdown window under **more options** to the right of your **Unity 2018.2.15f1** tab.
+![Adding components](../docs/images/unity_linux_components_1.PNG)
+* Make sure the **Linux Build Support** Platform is selected
+![Adding components](../docs/images/unity_linux_components_2.PNG)
+Once this component is successfully installed, you are ready to build Unity Projects for Linux!
+
+#### Build the Project
+* On your Windows machine, build the Unity Demo by navigating to the build settings option in the toolbar ```File -> Build Settings```
+* Make sure the following scenes are set to be built:
+	1. SimModeSelector
+	2. CarDemo
+	3. DroneDemo
+* Set the target operating system to linux, and choose the version appropriate for your system (x86 vs x86_64)
+* Click ```Build```
+* Transport the built project as well as the generated folder ```"{project_name}_Data"``` to your linux machine
+
+#### Generate AirsimWrapper Shared Library
+* On your linux machine, navigate to your AirSim repository, and run the following commands in a terminal window:
+	```
+	cd Unity
+	./build.sh
+	cp linux-build/libAirsimWrapper.so path/to/your/project/{project_name}_Data/Plugins/{os_version}
+	```
+This will generate the necessary shared library to allow Airsim to communicate with Unity and copy it to the plugins folder of your project binary.
+
+### Using Airsim API
 * For quickstart with the Python APIs for the car or the drone, simply run the [`hello_car.py`](https://github.com/Microsoft/AirSim/blob/master/PythonClient/car/hello_car.py) or the [`hello_drone.py`](https://github.com/Microsoft/AirSim/blob/master/PythonClient/multirotor/hello_drone.py) script accordingly. 
 * Details of the AirSim C++ and Python APIs are [here](https://github.com/Microsoft/AirSim/blob/master/docs/apis.md). 
 

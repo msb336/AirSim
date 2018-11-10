@@ -11,52 +11,38 @@ public class InitializeAirSim : MonoBehaviour
     {
         if (GetAirSimSettingsFileName() != string.Empty)
         {
-            if (AirSimSettings.Initialize())
-            {
-                if (AirSimSettings.GetSettings().SimMode == "")
-                {
-                    if (Application.isEditor)
-                    {
-                        var option = EditorUtility.DisplayDialogComplex("SimMode is not specified in Settings.json!",
-                            "Please select desired SimMode as per loaded scene.",
-                            "Car", "Exit", "Multirotor");
+			if(AirSimSettings.Initialize())
+			{
 
-                        switch (option)
-                        {
-                            case 2:
-                                AirSimSettings.GetSettings().SimMode = "Multirotor";
-                                break;
-                            case 1:
-                                EditorApplication.Exit(1);
-                                break;
-                            case 0:
-                                AirSimSettings.GetSettings().SimMode = "Car";
-                                break;
-                        }
-                    }
-                    else
+                switch (AirSimSettings.GetSettings().SimMode)
+                {
+                    case "Car":
                     {
-                        // Default to Car when Sim mode is missing.
-                        Debug.LogError("Sim mode is missing, defaulting to the Car demo");
-                        AirSimSettings.GetSettings().SimMode = "Car";
+                        LoadSceneAsPerSimMode(AirSimSettings.GetSettings().SimMode);
+                        break;
                     }
-                    
-                }
-                LoadSceneAsPerSimMode();
+                    case "Multirotor":
+                    {
+                        LoadSceneAsPerSimMode(AirSimSettings.GetSettings().SimMode);
+                        break;
+                    }
+				}
             }
         }
         else
         {
-            Debug.LogError("'Settings.json' file either not present or not configured properly.");
-            if (Application.isEditor) {
-                EditorUtility.DisplayDialog("Missing 'Settings.json' file!!!", "'Settings.json' file either not present or not configured properly.", "Exit");
-            }
+#if UNITY_EDITOR
+            EditorUtility.DisplayDialog("Missing 'Settings.json' file!!!", "'Settings.json' file either not present or not configured properly.", "Exit");
+            // EditorApplication.Exit(1);
+#else
             Application.Quit();
+#endif
         }
     }
 
     public static string GetAirSimSettingsFileName()
     {
+
         string fileName = Application.dataPath + "\\..\\settings.json";
         if (File.Exists(fileName))
         {
@@ -64,8 +50,10 @@ public class InitializeAirSim : MonoBehaviour
         }
 
         fileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), Path.Combine("AirSim", "settings.json"));
+        Debug.Log(fileName);
         if (File.Exists(fileName))
         {
+            
             return fileName;
         }
 
@@ -95,11 +83,11 @@ public class InitializeAirSim : MonoBehaviour
         return result;
     }
 
-    private void LoadSceneAsPerSimMode()
+    public void LoadSceneAsPerSimMode(string load_name)
     {
-        if (AirSimSettings.GetSettings().SimMode == "Car")
+        if (load_name == "Car")
             SceneManager.LoadSceneAsync("Scenes/CarDemo", LoadSceneMode.Single);
-        else if (AirSimSettings.GetSettings().SimMode == "Multirotor")
+        else if (load_name == "Multirotor")
             SceneManager.LoadSceneAsync("Scenes/DroneDemo", LoadSceneMode.Single);
     }
 }
