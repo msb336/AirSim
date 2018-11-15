@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.9.0)
 
-
 find_path(AIRSIM_ROOT NAMES AirSim.sln PATHS ".." "../.." "../../.." "../../../.." "../../../../.." "../../../../../..")
 message(AirSim Root directory: ${AIRSIM_ROOT})
 
