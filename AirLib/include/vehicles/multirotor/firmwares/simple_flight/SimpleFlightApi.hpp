@@ -139,10 +139,13 @@ public: //MultirotorApiBase implementation
 
 protected: 
     virtual Kinematics::State getKinematicsEstimated() const override
-    {
+	{
         return AirSimSimpleFlightCommon::toKinematicsState3r(firmware_->offboardApi().
-            getStateEstimator().getKinematicsEstimated());
-    }
+            getStateEstimator().getKinematicsEstimated(&vehicle_params_->getSensors()));
+		//return AirSimSimpleFlightCommon::toKinematicsState3r(firmware_->offboardApi().
+		//	getStateEstimator().getKinematicsEstimated());
+	}
+
 
     virtual Vector3r getPosition() const override
     {

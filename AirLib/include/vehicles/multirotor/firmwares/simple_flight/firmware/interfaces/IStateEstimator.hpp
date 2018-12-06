@@ -8,12 +8,18 @@ class IStateEstimator {
 public:
     virtual Axis3r getAngles() const = 0;
     virtual Axis3r getAngularVelocity() const = 0;
+
+	// How do I use methods from a derived class
+	virtual Axis3r getAngularVelocity(const ImuBase*) const = 0;
+
     virtual Axis3r getPosition() const = 0;
     virtual Axis3r getLinearVelocity() const = 0;
     virtual Axis4r getOrientation() const = 0;
     virtual GeoPoint getGeoPoint() const = 0;
 
     virtual KinematicsState getKinematicsEstimated() const = 0;
+	virtual KinematicsState getKinematicsEstimated(const SensorCollection*) const = 0;
+
 
     virtual GeoPoint getHomeGeoPoint() const = 0;
 

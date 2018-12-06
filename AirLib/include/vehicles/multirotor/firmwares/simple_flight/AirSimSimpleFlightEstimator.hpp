@@ -42,6 +42,14 @@ public:
 
         return conv;
     }
+	virtual simple_flight::Axis3r getAngularVelocity(const ImuBase* imu) const override
+	{
+		const auto anguler = imu->getOutput().angular_velocity;
+		simple_flight::Axis3r conv;
+		conv.x() = anguler.x(); conv.y() = anguler.y(); conv.z() = anguler.z();
+
+		return conv;
+	}
 
     virtual simple_flight::Axis3r getPosition() const override
     {
@@ -87,6 +95,21 @@ public:
         
         return state;
     }
+	virtual simple_flight::KinematicsState getKinematicsEstimated(const SensorCollection* sensors) const override
+	{
+		simple_flight::KinematicsState state;
+		state.position = getPosition();
+		state.orientation = getOrientation();
+		state.linear_velocity = getLinearVelocity();
+		state.angular_velocity = getAngularVelocity(
+					static_cast<const ImuBase*>(sensors->getByType(SensorBase::SensorType::Imu))
+													);
+
+		state.linear_acceleration = AirSimSimpleFlightCommon::toAxis3r(kinematics_->accelerations.linear);
+		state.angular_acceleration = AirSimSimpleFlightCommon::toAxis3r(kinematics_->accelerations.angular);
+
+		return state;
+	}
 
 
 private:

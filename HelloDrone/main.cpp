@@ -75,6 +75,9 @@ int main()
         // moveByVelocityZ is an offboard operation, so we need to set offboard mode.
         client.enableApiControl(true); 
         auto position = client.getMultirotorState().getPosition();
+		//auto angular_vel = client.getMultirotorState().kinematics_estimated.;
+
+
         float z = position.z(); // current position (NED coordinate system).  
         const float speed = 3.0f;
         const float size = 10.0f; 

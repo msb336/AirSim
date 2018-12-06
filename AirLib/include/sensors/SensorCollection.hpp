@@ -41,6 +41,7 @@ public:
         }
     }
 
+
     uint size(SensorBase::SensorType type) const
     {
         auto type_int = static_cast<uint>(type);
