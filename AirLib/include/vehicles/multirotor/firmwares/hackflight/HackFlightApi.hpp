@@ -13,8 +13,8 @@
 
 //** These are probably necessary, but will need to be changed
 // #include "firmware/Firmware.hpp"
-#include "AirHackFlightBoard.hpp"
-// #include "AirSimSimpleFlightEstimator.hpp"
+#include "AirSimHackFlightBoard.hpp"
+#include "AirSimHackFlightEstimator.hpp"
 // #include "AirSimSimpleFlightCommon.hpp"
 #include "physics/PhysicsBody.hpp"
 #include "common/AirSimSettings.hpp"
@@ -36,7 +36,7 @@ public:
 
         //create sim implementations of board and commlink
         board_.reset(new AirSimHackFlightBoard(&params_));
-        estimator_.reset(new AirSimSimpleFlightEstimator());
+        estimator_.reset(new AirSimHackFlightEstimator());
 
         //create firmware
         firmware_.reset(new simple_flight::Firmware(&params_, board_.get(), comm_link_.get(), estimator_.get())); //**
