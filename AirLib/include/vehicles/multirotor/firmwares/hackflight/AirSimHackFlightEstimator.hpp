@@ -5,7 +5,7 @@
 #define msr_airlib_AirSimSimpleFlightEstimator_hpp
 
 #include "firmware/interfaces/CommonStructs.hpp"
-// #include "AirSimSimpleFlightCommon.hpp"
+ #include "../simple_flight/AirSimSimpleFlightCommon.hpp"
 #include "physics/Kinematics.hpp"
 #include "physics/Environment.hpp"
 #include "common/Common.hpp"

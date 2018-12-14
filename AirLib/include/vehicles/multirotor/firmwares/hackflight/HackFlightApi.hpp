@@ -300,9 +300,9 @@ private:
     int remote_control_id_ = 0;
     simple_flight::Params params_;
 
-    unique_ptr<AirSimSimpleFlightBoard> board_;
-    unique_ptr<AirSimSimpleFlightEstimator> estimator_;
-    unique_ptr<simple_flight::IFirmware> firmware_;
+    unique_ptr<AirSimHackFlightBoard> board_;
+    unique_ptr<AirSimHackFlightEstimator> estimator_;
+    //unique_ptr<simple_flight::IFirmware> firmware_;
 
     MultirotorApiParams safety_params_;
 
