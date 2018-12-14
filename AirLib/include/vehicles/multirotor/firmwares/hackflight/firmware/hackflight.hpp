@@ -345,7 +345,11 @@ namespace hf {
 
                 // Check optional sensors
                 checkOptionalSensors();
-            } 
+            }
+			state_t getState()
+			{
+				return _state;
+			}
 
     }; // class Hackflight
 

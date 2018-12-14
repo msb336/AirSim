@@ -1,312 +1,175 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef msr_airlib_SimpleFlightDroneController_hpp
-#define msr_airlib_SimpleFlightDroneController_hpp
+#ifndef msr_airlib_HackFlightDroneController_hpp
+#define msr_airlib_HackFlightDroneController_hpp
 
-#include "vehicles/multirotor/api/MultirotorApiBase.hpp"
-#include "sensors/SensorCollection.hpp"
-#include "physics/Environment.hpp"
-#include "physics/Kinematics.hpp"
-#include "vehicles/multirotor/MultiRotorParams.hpp"
 #include "common/Common.hpp"
-
-//** These are probably necessary, but will need to be changed
-// #include "firmware/Firmware.hpp"
-#include "AirSimHackFlightBoard.hpp"
-#include "AirSimHackFlightEstimator.hpp"
-// #include "AirSimSimpleFlightCommon.hpp"
-#include "physics/PhysicsBody.hpp"
+#include "common/common_utils/Timer.hpp"
+#include "common/CommonStructs.hpp"
+#include "common/VectorMath.hpp"
 #include "common/AirSimSettings.hpp"
+#include "vehicles/multirotor/api/MultirotorApiBase.hpp"
+#include "common/PidController.hpp"
+#include "sensors/SensorCollection.hpp"
 
-//TODO: we need to protect contention between physics thread and API server thread
+//sensors
+#include "sensors/barometer/BarometerBase.hpp"
+#include "sensors/imu/ImuBase.hpp"
+#include "sensors/gps/GpsBase.hpp"
+#include "sensors/magnetometer/MagnetometerBase.hpp"
+#include "sensors/distance/DistanceBase.hpp"
+
+
+
+#include "firmware/hackflight.hpp"
+#include "firmware/boards/ladybug.hpp"
+#include "firmware/receivers/sbus.hpp"
+#include "firmware/mixers/quadx.hpp"
+#include "firmware/pidcontrollers/level.hpp"
+
+
+
 
 namespace msr { namespace airlib {
 
 class HackFlightApi : public MultirotorApiBase {
 
 public:
-    HackFlightApi(const MultiRotorParams* vehicle_params, const AirSimSettings::VehicleSetting* vehicle_setting)
-        : vehicle_params_(vehicle_params)
-    {
-        readSettings(*vehicle_setting);
+	void initialize(const AirSimSettings::HackFlightConnectionInfo& connection_info, const SensorCollection* sensors, bool is_simulation)
+	{
+		connection_info_ = connection_info;
+		sensors_ = sensors;
+		is_simulation_mode_ = is_simulation;
 
-        //TODO: set below properly for better high speed safety
-        safety_params_.vel_to_breaking_dist = safety_params_.min_breaking_dist = 0;
+		try
+		{
+			//** initialize hackflight
+			hf_.init(&board_, &receiver_, &mixer_, &rate_);
+		}
+		catch (std::exception& ex)
+		{
+			is_ready_ = false;
+			is_ready_message_ = Utils::stringf("Failed to connect: %s", ex.what());
+		}
+	}
+	virtual const SensorCollection& getSensors() const override
+	{
+		return *sensors_;
+	}
+	virtual void reset() override
+	{
+		board_.reboot()
+	}
+	virtual void update() override
+	{
+		hf_.update();
+		//** send sensor updates
+	}
+	virtual bool isReady(std::string& message) const override
+	{
+		if (!is_ready_)
+			message = is_ready_message_;
+		return is_ready_;
+	}
+	virtual void getStatusMessages(std::vector<std::string>& messages) override
+	{
+		update()
 
-        //create sim implementations of board and commlink
-        board_.reset(new AirSimHackFlightBoard(&params_));
-        estimator_.reset(new AirSimHackFlightEstimator());
+		//clear param
+		messages.clear();
 
-        //create firmware
-        firmware_.reset(new simple_flight::Firmware(&params_, board_.get(), comm_link_.get(), estimator_.get())); //**
-    }
+		//**move messages from private vars to param
+
+	}
+	virtual Kinematics::State getKinematicsEstimated() const override
+	{
+		update()
+		Kinematics::State state
+		//TODO: reduce code duplication in getPosition() etc methods?
+			
+		state.pose.position = Vector3r(hf_.getState().positionX, hf_.getState().positionY, hf_.getState().altitude);
+		state.pose.orientation = VectorMath::toQuaternion(hf_.getState().eulerAngles[0], hf_.getState().eulerAngles[1], hf_.getState().eulerAngles[2]);
+		state.twist.linear = Vector3r(hf_.getState().velocityForward, hf_.getState().velocityRightward, 0); //** no z velocity for hackflight?
+		state.twist.angular = Vector3r(hf_.getState().angularVelocities[0], hf_.getState().angularVelocities[1], hf_.getState().angularVelocities[2]);
+		state.pose.position = Vector3r(0,0,0); //** No acceleration either?
+
+		return state;
+	}
+	virtual bool isApiControlEnabled() const override
+	{
+		return is_api_control_enabled_;
+	}
+	virtual void enableApiControl(bool is_enabled) override
+	{
+		//** checkValidVehicle();
+		if (is_enabled) {
+			//** mav_vehicle_->requestControl(); //Is this necessary for hackflight?
+			is_api_control_enabled_ = true;
+		}
+		else {
+			//** mav_vehicle_->releaseControl();
+			is_api_control_enabled_ = false;
+		}
+	}
+	virtual Vector3r getPosition() const override
+	{
+		//** updateState();
+		return Vector3r(current_state_.local_est.pos.x, current_state_.local_est.pos.y, current_state_.local_est.pos.z);
+	}
+	virtual Vector3r getVelocity() const override
+	{
+		//** updateState();
+		return Vector3r(current_state_.local_est.lin_vel.x, current_state_.local_est.lin_vel.y, current_state_.local_est.lin_vel.z);
+	}
+
+	virtual Quaternionr getOrientation() const override
+	{
+		//** updateState();
+		return VectorMath::toQuaternion(current_state_.attitude.pitch, current_state_.attitude.roll, current_state_.attitude.yaw);
+	}
+
+	virtual LandedState getLandedState() const override
+	{
+		//** updateState();
+		return current_state_.controls.landed ? LandedState::Landed : LandedState::Flying;
+	}
+
+	//** virtual real_T getActuation
 
 
-public: //VehicleApiBase implementation
-    virtual void reset() override
-    {
-        MultirotorApiBase::reset();
 
-        firmware_->reset();
-    }
-    virtual void update() override
-    {
-        MultirotorApiBase::update();
 
-        //update controller which will update actuator control signal
-        firmware_->update();
-    }
-    virtual bool isApiControlEnabled() const override
-    {
-        return firmware_->offboardApi().hasApiControl();
-    }
-    virtual void enableApiControl(bool is_enabled) override
-    {
-        if (is_enabled) {
-            //comm_link should print message so no extra handling for errors
-            std::string message;
-            firmware_->offboardApi().requestApiControl(message);
-        }
-        else
-            firmware_->offboardApi().releaseApiControl();
-    }
-    virtual bool armDisarm(bool arm) override
-    {
-        std::string message;
-        if (arm)
-            return firmware_->offboardApi().arm(message);
-        else
-            return firmware_->offboardApi().disarm(message);
-    }
-    virtual GeoPoint getHomeGeoPoint() const override
-    {
-        return AirSimSimpleFlightCommon::toGeoPoint(firmware_->offboardApi().getHomeGeoPoint());
-    }
 
-    virtual const SensorCollection& getSensors() const override
-    {
-        return vehicle_params_->getSensors();
-    }
 
-public: //MultirotorApiBase implementation
-    virtual real_T getActuation(unsigned int rotor_index) const override
-    {
-        auto control_signal = board_->getMotorControlSignal(rotor_index);
-        return control_signal;
-    }
-    virtual size_t getActuatorCount() const override
-    {
-        return vehicle_params_->getParams().rotor_count;
-    }
-    virtual void moveByRC(const RCData& rc_data) override
-    {
-        setRCData(rc_data);
-    }
-    virtual void setSimulatedGroundTruth(const Kinematics::State* kinematics, const Environment* environment) override
-    {
-        board_->setGroundTruthKinematics(kinematics);
-        estimator_->setGroundTruthKinematics(kinematics, environment);
-    }
-    virtual bool setRCData(const RCData& rc_data) override
-    {
-        last_rcData_ = rc_data;
-        if (rc_data.is_valid) {
-            board_->setIsRcConnected(true);
-            board_->setInputChannel(0, rc_data.roll); //X
-            board_->setInputChannel(1, rc_data.yaw); //Y
-            board_->setInputChannel(2, rc_data.throttle); //F
-            board_->setInputChannel(3, -rc_data.pitch); //Z
-            board_->setInputChannel(4, static_cast<float>(rc_data.getSwitch(0))); //angle rate or level
-            board_->setInputChannel(5, static_cast<float>(rc_data.getSwitch(1))); //Allow API control
-            board_->setInputChannel(6, static_cast<float>(rc_data.getSwitch(2)));
-            board_->setInputChannel(7, static_cast<float>(rc_data.getSwitch(3)));
-            board_->setInputChannel(8, static_cast<float>(rc_data.getSwitch(4)));
-            board_->setInputChannel(9, static_cast<float>(rc_data.getSwitch(5)));
-            board_->setInputChannel(10, static_cast<float>(rc_data.getSwitch(6)));
-            board_->setInputChannel(11, static_cast<float>(rc_data.getSwitch(7)));
-        }
-        else { //else we don't have RC data
-            board_->setIsRcConnected(false);
-        }
 
-        return true;
-    }
-
-protected: 
-    virtual Kinematics::State getKinematicsEstimated() const override
-    {
-        return AirSimSimpleFlightCommon::toKinematicsState3r(firmware_->offboardApi().
-            getStateEstimator().getKinematicsEstimated());
-    }
-
-    virtual Vector3r getPosition() const override
-    {
-        const auto& val = firmware_->offboardApi().getStateEstimator().getPosition();
-        return AirSimSimpleFlightCommon::toVector3r(val);
-    }
-
-    virtual Vector3r getVelocity() const override
-    {
-        const auto& val = firmware_->offboardApi().getStateEstimator().getLinearVelocity();
-        return AirSimSimpleFlightCommon::toVector3r(val);
-    }
-
-    virtual Quaternionr getOrientation() const override
-    {
-        const auto& val = firmware_->offboardApi().getStateEstimator().getOrientation();
-        return AirSimSimpleFlightCommon::toQuaternion(val);
-    }
-
-    virtual LandedState getLandedState() const override
-    {
-        return firmware_->offboardApi().getLandedState() ? LandedState::Landed : LandedState::Flying;
-    }
-
-    virtual RCData getRCData() const override
-    {
-        //return what we received last time through setRCData
-        return last_rcData_;
-    }
-
-    virtual GeoPoint getGpsLocation() const override
-    {
-        return AirSimSimpleFlightCommon::toGeoPoint(firmware_->offboardApi().getGeoPoint());
-    }
-
-    virtual float getCommandPeriod() const override
-    {
-        return 1.0f / 50; //50hz
-    }
-
-    virtual float getTakeoffZ() const override
-    {
-        // pick a number, 3 meters is probably safe 
-        // enough to get out of the backwash turbulence.  Negative due to NED coordinate system.
-        return params_.takeoff.takeoff_z;
-    }
-
-    virtual float getDistanceAccuracy() const override
-    {
-        return 0.5f;    //measured in simulator by firing commands "MoveToLocation -x 0 -y 0" multiple times and looking at distance traveled
-    }
-
-    virtual void commandRollPitchThrottle(float pitch, float roll, float throttle, float yaw_rate) override
-    {
-        //Utils::log(Utils::stringf("commandRollPitchThrottle %f, %f, %f, %f", pitch, roll, throttle, yaw_rate));
-
-        typedef simple_flight::GoalModeType GoalModeType;
-        simple_flight::GoalMode mode(GoalModeType::AngleLevel, GoalModeType::AngleLevel, GoalModeType::AngleRate, GoalModeType::Passthrough);
-
-        simple_flight::Axis4r goal(roll, pitch, yaw_rate, throttle);
-
-        std::string message;
-        firmware_->offboardApi().setGoalAndMode(&goal, &mode, message);
-    }
-
-    virtual void commandRollPitchZ(float pitch, float roll, float z, float yaw) override
-    {
-        //Utils::log(Utils::stringf("commandRollPitchZ %f, %f, %f, %f", pitch, roll, z, yaw));
-
-        typedef simple_flight::GoalModeType GoalModeType;
-        simple_flight::GoalMode mode(GoalModeType::AngleLevel, GoalModeType::AngleLevel, GoalModeType::AngleLevel, GoalModeType::PositionWorld);
-
-        simple_flight::Axis4r goal(roll, pitch, yaw, z);
-
-        std::string message;
-        firmware_->offboardApi().setGoalAndMode(&goal, &mode, message);
-    }
-
-    virtual void commandVelocity(float vx, float vy, float vz, const YawMode& yaw_mode) override
-    {
-        //Utils::log(Utils::stringf("commandVelocity %f, %f, %f, %f", vx, vy, vz, yaw_mode.yaw_or_rate));
-
-        typedef simple_flight::GoalModeType GoalModeType;
-        simple_flight::GoalMode mode(GoalModeType::VelocityWorld, GoalModeType::VelocityWorld, 
-            yaw_mode.is_rate ? GoalModeType::AngleRate : GoalModeType::AngleLevel, 
-            GoalModeType::VelocityWorld);
-
-        simple_flight::Axis4r goal(vy, vx, Utils::degreesToRadians(yaw_mode.yaw_or_rate), vz);
-
-        std::string message;
-        firmware_->offboardApi().setGoalAndMode(&goal, &mode, message);
-    }
-
-    virtual void commandVelocityZ(float vx, float vy, float z, const YawMode& yaw_mode) override
-    {
-        //Utils::log(Utils::stringf("commandVelocityZ %f, %f, %f, %f", vx, vy, z, yaw_mode.yaw_or_rate));
-
-        typedef simple_flight::GoalModeType GoalModeType;
-        simple_flight::GoalMode mode(GoalModeType::VelocityWorld, GoalModeType::VelocityWorld, 
-            yaw_mode.is_rate ? GoalModeType::AngleRate : GoalModeType::AngleLevel, 
-            GoalModeType::PositionWorld);
-
-        simple_flight::Axis4r goal(vy, vx, Utils::degreesToRadians(yaw_mode.yaw_or_rate), z);
-
-        std::string message;
-        firmware_->offboardApi().setGoalAndMode(&goal, &mode, message);
-    }
-
-    virtual void commandPosition(float x, float y, float z, const YawMode& yaw_mode) override
-    {
-        //Utils::log(Utils::stringf("commandPosition %f, %f, %f, %f", x, y, z, yaw_mode.yaw_or_rate));
-
-        typedef simple_flight::GoalModeType GoalModeType;
-        simple_flight::GoalMode mode(GoalModeType::PositionWorld, GoalModeType::PositionWorld, 
-            yaw_mode.is_rate ? GoalModeType::AngleRate : GoalModeType::AngleLevel, 
-            GoalModeType::PositionWorld);
-
-        simple_flight::Axis4r goal(y, x, Utils::degreesToRadians(yaw_mode.yaw_or_rate), z);
-
-        std::string message;
-        firmware_->offboardApi().setGoalAndMode(&goal, &mode, message);
-    }
-
-    virtual const MultirotorApiParams& getMultirotorApiParams() const override
-    {
-        return safety_params_;
-    }
-
-    //*** End: MultirotorApiBase implementation ***//
+	void updateState() const
+	{
+		hf_.update();
+		state_t current_state = hf_.getState();
+		StatusLock lock(this);
+		if (mav_vehicle_ != nullptr) {
+			int version = mav_vehicle_->getVehicleStateVersion();
+			if (version != state_version_)
+			{
+				current_state_ = mav_vehicle_->getVehicleState();
+				state_version_ = version;
+			}
+		}
+	}
 
 private:
-    //convert pitch, roll, yaw from -1 to 1 to PWM
-    static uint16_t angleToPwm(float angle)
-    {
-        return static_cast<uint16_t>(angle * 500.0f + 1500.0f);
-    }
-    static uint16_t thrustToPwm(float thrust)
-    {
-        return static_cast<uint16_t>((thrust < 0 ? 0 : thrust) * 1000.0f + 1000.0f);
-    }
-    static uint16_t switchTopwm(float switchVal, uint maxSwitchVal = 1)
-    {
-        return static_cast<uint16_t>(1000.0f * switchVal / maxSwitchVal + 1000.0f);
-    }
-
-    void readSettings(const AirSimSettings::VehicleSetting& vehicle_setting)
-    {
-        params_.default_vehicle_state = simple_flight::VehicleState::fromString(
-            vehicle_setting.default_vehicle_state == "" ? "Armed" : vehicle_setting.default_vehicle_state);
-
-        remote_control_id_ = vehicle_setting.rc.remote_control_id;
-        params_.rc.allow_api_when_disconnected = vehicle_setting.rc.allow_api_when_disconnected;
-        params_.rc.allow_api_always = vehicle_setting.allow_api_always;
-    }
-
-private:
-    const MultiRotorParams* vehicle_params_;
-
-    int remote_control_id_ = 0;
-    simple_flight::Params params_;
-
-    unique_ptr<AirSimHackFlightBoard> board_;
-    unique_ptr<AirSimHackFlightEstimator> estimator_;
-    //unique_ptr<simple_flight::IFirmware> firmware_;
-
-    MultirotorApiParams safety_params_;
-
-    RCData last_rcData_;
+	const SensorCollection* sensors_;
+	AirSimSettings::HackFlightConnectionInfo connection_info_;
+	bool is_simulation_mode_;
+	bool is_ready_;
+	std::string is_ready_message_;
+	hf::Hackflight hf_;
+	hf::Board board_;
+	hf::Receiver receiver_;
+	hf::Mixer mixer_;
+	hf::Raterate_;
+	
 };
 
 }} //namespace
