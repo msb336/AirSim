@@ -36,9 +36,8 @@ namespace msr { namespace airlib {
 class HackFlightApi : public MultirotorApiBase {
 
 public:
-	void initialize(const AirSimSettings::HackFlightConnectionInfo& connection_info, const SensorCollection* sensors, bool is_simulation)
+	void initialize(const SensorCollection* sensors, bool is_simulation)
 	{
-		connection_info_ = connection_info;
 		sensors_ = sensors;
 		is_simulation_mode_ = is_simulation;
 
@@ -115,7 +114,7 @@ public:
 	virtual Vector3r getPosition() const override
 	{
 		//** updateState();
-		return Vector3r(current_state_.local_est.pos.x, current_state_.local_est.pos.y, current_state_.local_est.pos.z);
+		return Vector3r(hf_.getState().positionX, hf_.getState().positionY, hf_.getState().altitude);
 	}
 	virtual Vector3r getVelocity() const override
 	{
@@ -126,19 +125,39 @@ public:
 	virtual Quaternionr getOrientation() const override
 	{
 		//** updateState();
-		return VectorMath::toQuaternion(current_state_.attitude.pitch, current_state_.attitude.roll, current_state_.attitude.yaw);
+		return  VectorMath::toQuaternion(hf_.getState().eulerAngles[0], hf_.getState().eulerAngles[1], hf_.getState().eulerAngles[2]);
 	}
 
-	virtual LandedState getLandedState() const override
+	//virtual LandedState getLandedState() const override
+	//{
+
+	//	//** not sure this exists in hackflight
+	//	// update();
+	//	//return current_state_.controls.landed ? LandedState::Landed : LandedState::Flying;
+	//}
+
+	virtual real_T getActuation(unsigned int rotor_index) const override
 	{
-		//** updateState();
-		return current_state_.controls.landed ? LandedState::Landed : LandedState::Flying;
+		//** no method for this inside of hackflight. maybe add to individual board controls?
+		if (!is_simulation_mode_)
+			throw std::logic_error("Attempt to read motor controls while not in simulation mode");
 	}
 
-	//** virtual real_T getActuation
+	virtual bool armDisarm(bool arm) override
+	{
+		SingleCall lock(this);
+		bool rc = false;
+		hf_.handle_SET_ARMED_Request(arm, &rc);
+		return rc;
+	}
 
+	//virtual bool takeoff(float timeout_sec) override
+	//{
+	//	SingleCall lock(this);
+	//	auto vec = getPosition();
+	//	float z = vec.z() + getTakeoffZ();
 
-
+	//}
 
 
 
@@ -160,7 +179,6 @@ public:
 
 private:
 	const SensorCollection* sensors_;
-	AirSimSettings::HackFlightConnectionInfo connection_info_;
 	bool is_simulation_mode_;
 	bool is_ready_;
 	std::string is_ready_message_;

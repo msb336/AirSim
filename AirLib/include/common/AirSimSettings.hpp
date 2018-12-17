@@ -25,6 +25,7 @@ public: //types
     static constexpr int kSubwindowCount = 3; //must be >= 3 for now
     static constexpr char const * kVehicleTypePX4 = "px4multirotor";
 	static constexpr char const * kVehicleTypeArduCopterSolo = "arducoptersolo";
+	static constexpr char const * kVehicleTypeHackFlight = "hackflightmultirotor";
 	static constexpr char const * kVehicleTypeSimpleFlight = "simpleflight";
     static constexpr char const * kVehicleTypePhysXCar = "physxcar";
     static constexpr char const * kVehicleTypeComputerVision = "computervision";
@@ -290,6 +291,7 @@ public: //types
 	struct MavLinkVehicleSetting : public VehicleSetting {
 		MavLinkConnectionInfo connection_info;
 	};
+	struct HackFlightVehicleSetting : public VehicleSetting {};
 
     struct SegmentationSetting {
         enum class InitMethodType {
@@ -434,7 +436,7 @@ private:
                 if (settings_version_actual == 1) {
                     const std::vector<std::string> all_changed_keys = {
                         "AdditionalCameras", "CaptureSettings", "NoiseSettings",
-                        "UsageScenario", "SimpleFlight", "PX4"
+                        "UsageScenario", "SimpleFlight", "PX4", "HackFlight"
                     };
                     std::stringstream detected_keys_ss;
                     for (const auto& changed_key : all_changed_keys) {
@@ -614,6 +616,18 @@ private:
         }
     }
 
+	static std::unique_ptr<VehicleSetting> createHackFlightVehicleSetting()
+	{
+			std::unique_ptr<VehicleSetting> vehicle_setting_p = std::unique_ptr<VehicleSetting>(new HackFlightVehicleSetting());
+		HackFlightVehicleSetting* vehicle_setting = static_cast<HackFlightVehicleSetting*>(vehicle_setting_p.get());
+
+		//TODO: we should be selecting remote if available else keyboard
+		//currently keyboard is not supported so use rc as default
+		vehicle_setting->rc.remote_control_id = 0;
+
+		return vehicle_setting_p;
+	}
+
     static std::unique_ptr<VehicleSetting> createMavLinkVehicleSetting(const Settings& settings_json) 
     {
         //these settings_json are expected in same section, not in another child
@@ -679,6 +693,10 @@ private:
         if (vehicle_type == kVehicleTypePX4 || vehicle_type == kVehicleTypeArduCopterSolo)
             vehicle_setting = createMavLinkVehicleSetting(settings_json);
         //for everything else we don't need derived class yet
+		else if (vehicle_type == kVehicleTypeHackFlight)
+		{
+			vehicle_setting = createHackFlightVehicleSetting();
+		}
         else {
             vehicle_setting = std::unique_ptr<VehicleSetting>(new VehicleSetting());
             if (vehicle_type == kVehicleTypeSimpleFlight) {
