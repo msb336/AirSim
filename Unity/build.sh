@@ -8,11 +8,17 @@ if [ ! -d "linux-build" ]; then
 fi
 
 cd linux-build;
-export CC=/usr/bin/clang-5.0;
-export CXX=/usr/bin/clang++-5.0;
+export CC="clang-5.0"
+export CXX="clang++-5.0"
+
 cmake ../AirLibWrapper/AirsimWrapper;
-make;
-cd ..;
+make -j`nproc`;
+if [ ! -d "../UnityDemo/Assets/Plugins" ]; then
+	mkdir ../ UnityDemo/Assets/Plugins;
+fi
+cp libAirsimWrapper.so ../UnityDemo/Assets/Plugins;
+
+cd ..
 if [ -f AirLibWrapper/AirsimWrapper/rpclib.pc.in ]; then
 	rm AirLibWrapper/AirsimWrapper/rpclib.pc.in
 fi

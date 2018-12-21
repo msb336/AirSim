@@ -5,7 +5,7 @@
 * Check out the [Unity blogpost](https://blogs.unity3d.com/2018/11/14/airsim-on-unity-experiment-with-autonomous-vehicle-simulation/) for overview on the release.  
 
 ### Warning: Experimental Release
-This project is still in early development, expect some rough edges. We are working to fully support the full AirLib API and feature set, but some things may be missing. 
+This project is still in early development, expect some rough edges. We are working to fully support the full AirLib API and feature set, but some things may be missing. [Click here](../docs/unity_api_support.md) for the list of currently supported APIs.
 
 ## Windows
 ### Building from source
@@ -50,31 +50,64 @@ After following the steps to build AirSim and Unity on Windows, do the following
 	```
 This will generate the necessary shared library to allow Airsim to communicate with Unity and copy it to the plugins folder of your project binary.
 
-## Usage 
-* Start Unity and click `Open project`. 
-* Select the folder `AirSim\Unity\UnityDemo`, and then hit the button `Select Folder`. 
-* In the bottom pane, Click on `Projects`->`Assets`->`Scenes`. Then, **Double-click** on `SimModeSelector`, `DroneDemo`, or `CarDemo`. 
-* Hit the play button to start the simulation (and hit play again to stop the simulation. .  
-* Alternatively, you can change the SimMode in your `Settings.json` file. (You can read more about [`Settings.json` here](https://github.com/Microsoft/AirSim/blob/master/docs/settings.md))
-* Controlling the car:    
-Use `WASD` or the `Arrow keys` or the AirSim client.   
-* Controlling the drone:    
-Use the `PageUP`/`PageDown` with` WASD`/`Arrow` keys.
-* Changing camera views:    
-Keys `0`, `1`, `2`, `3` are used to toggle windows of different camera views.
-* Recording simulation data:    
-Press *Record* button(Red button) located at the right bottom corner of the screen, to toggle recording of the simulation data. The recorded data can be found at `Documents\AirSim\(Date of recording)`
+## Linux
+#### Necessary Packages
+The linux wrapper requires Boost filesystem, which you can install by running the following command:
+```
+sudo apt-get install libboost-all-dev
+```
+#### Download and Install Unity for Linux
+<span style="color:red">Warning:</span> Unity Editor for Linux is still in Beta. Expect some rough edges.
 
-## Cross-Compiling to Linux
-While Airsim Projects cannot be built natively on Linux using the Unity engine at this time, Unity Editor on Windows does support compiling projects to Linux systems.
-After following the steps to build AirSim and Unity on Windows, do the following:
+[Unity Editor](https://forum.unity.com/threads/unity-on-linux-release-notes-and-known-issues.350256/#post-2556301)
+* Download the editor by doing one of the following:
+	1. Navigate to the latest post on [this thread](https://forum.unity.com/threads/unity-on-linux-release-notes-and-known-issues.350256/#post-2556301) and click the download link
+	2. Open a terminal window and enter the following command:
+		```
+		wget https://beta.unity3d.com/download/dad990bf2728/UnitySetup-2018.2.7f1
+		```
+* Install The editor
+```
+chmod +x UnitySetup-2018.2.7f1
+./UnitySetup-2018.2.7f1
+```
 
 #### Build Airsim in Linux
 * Open a new terminal window on your linux machine
 * Clone the repo: `git clone https://github.com/Microsoft/AirSim.git`, and go the AirSim directory by `cd AirSim`. 
 * Run `setup.sh ` and subsequently `build.sh` from the the terminal.
 
-### Package UnityDemo Binary
+#### Generate AirsimWrapper Shared Library
+* On your linux machine, navigate to your AirSim repository, and run the following commands in a terminal window:
+	```
+	cd Unity
+	./build.sh
+	```
+This will generate the necessary shared library and copy it to the UnityDemo Plugins folder.
+
+## Usage 
+* Start Unity and click `Open project`. 
+* Select the folder `AirSim\Unity\UnityDemo`, and then hit the button `Select Folder`. 
+* In the bottom pane, Click on `Projects`->`Assets`->`Scenes`. Then, **Double-click** on `SimModeSelector`. This will load the SimModeSelector scene into the scene hierarchy pane. *DO NOT* add CarDemo or DroneDemo scene into the scene hierarchy pane.
+* Hit the play button to start the simulation (and hit play again to stop the simulation. .  
+* Alternatively, you can change the SimMode in your `Settings.json` file. (You can read more about [`Settings.json` here](https://github.com/Microsoft/AirSim/blob/master/docs/settings.md))
+* Controlling the car:    
+Use `WASD` or the `Arrow keys` or the AirSim client.   
+* Controlling the drone:    
+Keyboard control is not currently available for drone flight.
+* Changing camera views:    
+Keys `0`, `1`, `2`, `3` are used to toggle windows of different camera views.
+* Recording simulation data:    
+Press *Record* button(Red button) located at the right bottom corner of the screen, to toggle recording of the simulation data. The recorded data can be found at `Documents\AirSim\(Date of recording)`
+
+## Cross-Compiling to Linux
+Unity Editor supports compiling projects to Linux systems.
+After following the steps to build AirSim and Unity on Windows, do the following:
+
+#### Linux Pre-Requisites
+Before being able to run Unity Binaries with the Airsim plugin, be sure have airsim and airsim unity built on your linux machine by following the Linux build steps above.
+
+### Package UnityDemo Binary On Windows
 
 #### Install Necessary Components
 In order to package your project for linux, the **Linux Build Support** Unity add-on must be installed.
@@ -94,19 +127,26 @@ Once this component is successfully installed, you are ready to build Unity Proj
 * Click ```Build```
 * Transport the built project as well as the generated folder ```"{project_name}_Data"``` to your linux machine
 
-#### Generate AirsimWrapper Shared Library
+#### Copy The AirsimWrapper Library to the Project Plugins folder
 * On your linux machine, navigate to your AirSim repository, and run the following commands in a terminal window:
 	```
-	cd Unity
-	./build.sh
-	cp linux-build/libAirsimWrapper.so path/to/your/project/{project_name}_Data/Plugins/{os_version}
+	cp Unity/linux-build/libAirsimWrapper.so path/to/your/project/{project_name}_Data/Plugins/{os_version}
 	```
 This will generate the necessary shared library to allow Airsim to communicate with Unity and copy it to the plugins folder of your project binary.
 
+#### Run the Project Binary
+* Open a terminal and navigate to your project directory
+* Set your project binary as an executable file:
+```
+chmod +x "{project_name}.{configuration}"
+```
+* Run the binary file
+```
+./{project_name}.{configuration}
+```
 ### Using Airsim API
 * For quickstart with the Python APIs for the car or the drone, simply run the [`hello_car.py`](https://github.com/Microsoft/AirSim/blob/master/PythonClient/car/hello_car.py) or the [`hello_drone.py`](https://github.com/Microsoft/AirSim/blob/master/PythonClient/multirotor/hello_drone.py) script accordingly. 
 * Details of the AirSim C++ and Python APIs are [here](https://github.com/Microsoft/AirSim/blob/master/docs/apis.md). 
 
 ### Acknowledgements
 * The drone object was provided by user 31415926 on [sketchfab](https://sketchfab.com/models/055841df0fb24cd4abde06a91f7d360a). It is licensed under the [CC License](https://creativecommons.org/licenses/by/4.0/).
-* The rest of this project follows the same License as the Airsim project.
