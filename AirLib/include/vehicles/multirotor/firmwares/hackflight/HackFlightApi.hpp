@@ -20,13 +20,30 @@
 #include "sensors/magnetometer/MagnetometerBase.hpp"
 #include "sensors/distance/DistanceBase.hpp"
 
-
+#include "firmware/datatypes.hpp"
 
 #include "firmware/hackflight.hpp"
+
+// Boards
+#include "firmware/boards/arduino.hpp"
+#include "firmware/boards/bonadrone.hpp"
 #include "firmware/boards/ladybug.hpp"
+#include "firmware/boards/mock.hpp"
+#include "firmware/boards/realboard.hpp"
+#include "firmware/boards/sentral.hpp"
+#include "firmware/boards/softquat.hpp"
+#include "firmware/boards/superfly.hpp"
+#include "firmware/boards/thingdev.hpp"
+
+// Receivers
+#include "firmware/receivers/cppm.hpp"
+#include "firmware/receivers/dsmx.hpp"
+#include "firmware/receivers/esp8266.hpp"
+#include "firmware/receivers/mock.hpp"
 #include "firmware/receivers/sbus.hpp"
+
+//Mixers
 #include "firmware/mixers/quadx.hpp"
-#include "firmware/pidcontrollers/level.hpp"
 
 
 
@@ -36,21 +53,34 @@ namespace msr { namespace airlib {
 class HackFlightApi : public MultirotorApiBase {
 
 public:
-	void initialize(const SensorCollection* sensors, bool is_simulation)
+	void configure(const AirSimSettings::HackFlightConnectionInfo& connection_info)
 	{
-		sensors_ = sensors;
-		is_simulation_mode_ = is_simulation;
 
-		try
-		{
-			//** initialize hackflight
-			hf_.init(&board_, &receiver_, &mixer_, &rate_);
+		// TODO: fill in other possible options
+		//if (connection_info.board_type == "mock") {
+			hf::MockBoard board(5);
+		//}
+
+		//if (connection_info.receiver_type == "mock") {
+			hf::Mock_Receiver receiver;
+		//}
+		hf::MixerQuadX mixer;
+
+		hf::Rate rate(0, 0, 0, 0, 0, 0, 0, 0);
+		try {
+			hf_->init(&board, &receiver, &mixer, &rate);
 		}
-		catch (std::exception& ex)
-		{
+		catch (std::exception& ex) {
 			is_ready_ = false;
 			is_ready_message_ = Utils::stringf("Failed to connect: %s", ex.what());
 		}
+	}
+	void initialize(const AirSimSettings::HackFlightConnectionInfo& connection_info, const SensorCollection* sensors, bool is_simulation)
+	{
+		sensors_ = sensors;
+		is_simulation_mode_ = is_simulation;
+		// Setup hackflight parameters
+		configure(connection_info);
 	}
 	virtual const SensorCollection& getSensors() const override
 	{
@@ -58,12 +88,16 @@ public:
 	}
 	virtual void reset() override
 	{
-		board_.reboot()
+		//** no public method to do this
 	}
 	virtual void update() override
 	{
-		hf_.update();
+		hf_->update();
 		//** send sensor updates
+	}
+	void updateState() const
+	{
+		hf_->update();
 	}
 	virtual bool isReady(std::string& message) const override
 	{
@@ -73,7 +107,7 @@ public:
 	}
 	virtual void getStatusMessages(std::vector<std::string>& messages) override
 	{
-		update()
+		update();
 
 		//clear param
 		messages.clear();
@@ -83,14 +117,14 @@ public:
 	}
 	virtual Kinematics::State getKinematicsEstimated() const override
 	{
-		update()
-		Kinematics::State state
+		updateState();
+		Kinematics::State state;
 		//TODO: reduce code duplication in getPosition() etc methods?
 			
-		state.pose.position = Vector3r(hf_.getState().positionX, hf_.getState().positionY, hf_.getState().altitude);
-		state.pose.orientation = VectorMath::toQuaternion(hf_.getState().eulerAngles[0], hf_.getState().eulerAngles[1], hf_.getState().eulerAngles[2]);
-		state.twist.linear = Vector3r(hf_.getState().velocityForward, hf_.getState().velocityRightward, 0); //** no z velocity for hackflight?
-		state.twist.angular = Vector3r(hf_.getState().angularVelocities[0], hf_.getState().angularVelocities[1], hf_.getState().angularVelocities[2]);
+		state.pose.position = Vector3r(hf_->getState().positionX, hf_->getState().positionY, hf_->getState().altitude);
+		state.pose.orientation = VectorMath::toQuaternion(hf_->getState().eulerAngles[0], hf_->getState().eulerAngles[1], hf_->getState().eulerAngles[2]);
+		state.twist.linear = Vector3r(hf_->getState().velocityForward, hf_->getState().velocityRightward, 0); //** no z velocity for hackflight?
+		state.twist.angular = Vector3r(hf_->getState().angularVelocities[0], hf_->getState().angularVelocities[1], hf_->getState().angularVelocities[2]);
 		state.pose.position = Vector3r(0,0,0); //** No acceleration either?
 
 		return state;
@@ -114,18 +148,17 @@ public:
 	virtual Vector3r getPosition() const override
 	{
 		//** updateState();
-		return Vector3r(hf_.getState().positionX, hf_.getState().positionY, hf_.getState().altitude);
+		return Vector3r(hf_->getState().positionX, hf_->getState().positionY, hf_->getState().altitude);
 	}
 	virtual Vector3r getVelocity() const override
 	{
-		//** updateState();
-		return Vector3r(current_state_.local_est.lin_vel.x, current_state_.local_est.lin_vel.y, current_state_.local_est.lin_vel.z);
+		return Vector3r(current_state_.velocityForward, current_state_.velocityRightward);
 	}
 
 	virtual Quaternionr getOrientation() const override
 	{
 		//** updateState();
-		return  VectorMath::toQuaternion(hf_.getState().eulerAngles[0], hf_.getState().eulerAngles[1], hf_.getState().eulerAngles[2]);
+		return  VectorMath::toQuaternion(hf_->getState().eulerAngles[0], hf_->getState().eulerAngles[1], hf_->getState().eulerAngles[2]);
 	}
 
 	//virtual LandedState getLandedState() const override
@@ -145,10 +178,8 @@ public:
 
 	virtual bool armDisarm(bool arm) override
 	{
-		SingleCall lock(this);
-		bool rc = false;
-		hf_.handle_SET_ARMED_Request(arm, &rc);
-		return rc;
+		// // This is a protected method. How else to arm/Disarm the drone?
+		//hf_->handle_SET_ARMED_Request(arm);
 	}
 
 	//virtual bool takeoff(float timeout_sec) override
@@ -164,17 +195,24 @@ public:
 
 	void updateState() const
 	{
-		hf_.update();
-		state_t current_state = hf_.getState();
-		StatusLock lock(this);
-		if (mav_vehicle_ != nullptr) {
-			int version = mav_vehicle_->getVehicleStateVersion();
-			if (version != state_version_)
-			{
-				current_state_ = mav_vehicle_->getVehicleState();
-				state_version_ = version;
-			}
+		hf_->update();
+		state_t current_state = hf_->getState();
+	}
+
+
+protected: //methods
+	//** neeed to build in commands to match MultirotorApiBase virtual functions
+	virtual void commandRollPitchZ(float pitch, float roll, float z, float yaw) override
+	{
+		if (target_height_ != -z) {
+
+			thrust_controller_.setPoint(-z, .05f, .005f, 0.09f);
+			target_height_ = -z;
 		}
+		checkValidVehicle();
+		auto state = mav_vehicle_->getVehicleState();
+		float thrust = 0.21f + thrust_controller_.control(-state.local_est.pos.z);
+		mav_vehicle_->moveByAttitude(roll, pitch, yaw, 0, 0, 0, thrust);
 	}
 
 private:
@@ -182,12 +220,10 @@ private:
 	bool is_simulation_mode_;
 	bool is_ready_;
 	std::string is_ready_message_;
-	hf::Hackflight hf_;
-	hf::Board board_;
-	hf::Receiver receiver_;
-	hf::Mixer mixer_;
-	hf::Raterate_;
-	
+	std::shared_ptr<hf::Hackflight> hf_;
+	bool is_api_control_enabled_;
+	state_t current_state_;
+	float target_height_;
 };
 
 }} //namespace

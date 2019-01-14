@@ -245,7 +245,14 @@ public: //types
 
         RCSettings rc;
     };
-
+	struct HackFlightConnectionInfo {
+		bool use_serial = true;
+		std::string serial_port = "*";
+		int baud_rate = 115200;
+		std::string board_type = "mock";
+		std::string receiver_type = "mock";
+		uint8_t channel_map[6] = { 0,1,2,3,4,5 };
+	};
     struct MavLinkConnectionInfo {
         /* Default values are requires so uninitialized instance doesn't have random values */
 
@@ -291,7 +298,9 @@ public: //types
 	struct MavLinkVehicleSetting : public VehicleSetting {
 		MavLinkConnectionInfo connection_info;
 	};
-	struct HackFlightVehicleSetting : public VehicleSetting {};
+	struct HackFlightVehicleSetting : public VehicleSetting {
+		HackFlightConnectionInfo connection_info;
+	};
 
     struct SegmentationSetting {
         enum class InitMethodType {
@@ -616,14 +625,12 @@ private:
         }
     }
 
-	static std::unique_ptr<VehicleSetting> createHackFlightVehicleSetting()
+	static std::unique_ptr<VehicleSetting> createHackFlightVehicleSetting(const Settings& settings_json)
 	{
 			std::unique_ptr<VehicleSetting> vehicle_setting_p = std::unique_ptr<VehicleSetting>(new HackFlightVehicleSetting());
-		HackFlightVehicleSetting* vehicle_setting = static_cast<HackFlightVehicleSetting*>(vehicle_setting_p.get());
+			vehicle_setting_p->rc.remote_control_id = 0;
+			HackFlightConnectionInfo &connection_info = vehicle_setting->connection_info;
 
-		//TODO: we should be selecting remote if available else keyboard
-		//currently keyboard is not supported so use rc as default
-		vehicle_setting->rc.remote_control_id = 0;
 
 		return vehicle_setting_p;
 	}
@@ -695,7 +702,7 @@ private:
         //for everything else we don't need derived class yet
 		else if (vehicle_type == kVehicleTypeHackFlight)
 		{
-			vehicle_setting = createHackFlightVehicleSetting();
+			vehicle_setting = createHackFlightVehicleSetting(settings_json);
 		}
         else {
             vehicle_setting = std::unique_ptr<VehicleSetting>(new VehicleSetting());

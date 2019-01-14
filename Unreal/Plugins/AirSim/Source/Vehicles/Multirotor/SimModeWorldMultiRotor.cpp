@@ -96,7 +96,8 @@ bool ASimModeWorldMultiRotor::isVehicleTypeSupported(const std::string& vehicle_
 {
     return ((vehicle_type == AirSimSettings::kVehicleTypeSimpleFlight) ||
         (vehicle_type == AirSimSettings::kVehicleTypePX4) ||
-		(vehicle_type == AirSimSettings::kVehicleTypeArduCopterSolo));
+		(vehicle_type == AirSimSettings::kVehicleTypeArduCopterSolo) ||
+		(vehicle_type == AirSimSettings::kVehicleTypeHackFlight));
 }
 
 std::string ASimModeWorldMultiRotor::getVehiclePawnPathName(const AirSimSettings::VehicleSetting& vehicle_setting) const
