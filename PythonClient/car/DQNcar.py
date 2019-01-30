@@ -1,6 +1,6 @@
 import setup_path 
 import airsim
-
+from airsim.types import Vector3r, Quaternionr, Pose
 import math
 import time
 from argparse import ArgumentParser
@@ -488,9 +488,20 @@ def isDone(car_state, car_controls, reward):
     if reward < -1:
         done = 1
     if car_controls.brake == 0:
-        if car_state.speed <= 5:
+        if car_state.speed <= 2:
             done = 1
     return done
+
+def setRandomPose(center, range):
+    random_vector = np.random.random_sample((2,1))
+    unit_vector = random_vector / np.linalg.norm(random_vector)
+    displacement_vector = (range[1]-range[0])*np.random.random_sample()*unit_vector + range[0]
+    position = Vector3r(x_val = displacement_vector[0][0]-center.x_val, 
+                        y_val = displacement_vector[1][0] - center.y_val, 
+                        z_val = center.z_val)
+    orientation = Quaternionr(z_val = 4*np.random.random_sample()-2)
+    pose = Pose(position_val = position, orientation_val = orientation)
+    return pose
 
 client = airsim.CarClient()
 client.confirmConnection()
@@ -511,6 +522,8 @@ max_steps = epoch * 250000
 
 responses = client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.DepthPerspective, True, False)])
 current_state = transform_input(responses)
+start_pose = client.simGetVehiclePose()
+center = start_pose.position
 while True:
     action = agent.act(current_state)
     car_controls = interpret_action(action)
@@ -527,6 +540,8 @@ while True:
 
     if done:
         client.reset()
+        pose = setRandomPose(center, [2,5])
+        client.simSetVehiclePose(pose, True)
         car_control = interpret_action(1)
         client.setCarControls(car_control)
         time.sleep(1)
