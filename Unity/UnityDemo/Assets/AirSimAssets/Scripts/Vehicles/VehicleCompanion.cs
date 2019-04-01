@@ -12,11 +12,19 @@ namespace AirSimUnity {
      *
      * Unity client components should use an instance of this class to interact with AirLib.
      */
-
+    struct StaticMesh
+    {
+        // public GameObject game_object;
+        public AirSimPose pose;
+        public string name;
+        // public GameObject game_object;
+    }
     internal class VehicleCompanion : IAirSimInterface {
 
         //All the vehicles that are created in this game.
         private static List<VehicleCompanion> Vehicles = new List<VehicleCompanion>();
+
+        private static List<StaticMesh> GameObjects = new List<StaticMesh>();
 
         private static int basePortId;
 
@@ -109,13 +117,55 @@ namespace AirSimUnity {
 
         private static bool SetPose(AirSimPose pose, bool ignoreCollision, string vehicleName) {
             var vehicle = Vehicles.Find(element => element.vehicleName == vehicleName);
+            if ( vehicle != null){
             vehicle.VehicleInterface.SetPose(pose, ignoreCollision);
+            }
+            else{
+                var static_mesh = GameObjects.Find(element => element.name == vehicleName);
+                if (static_mesh != null){
+
+                }
+            }
             return true;
         }
 
         private static AirSimPose GetPose(string vehicleName) {
+            // All get pose calls, vehicle or otherwise, occur here
             var vehicle = Vehicles.Find(element => element.vehicleName == vehicleName);
-            return vehicle.VehicleInterface.GetPose();
+            Debug.Log(vehicle);
+            AirSimPose pose;
+            // Check if there is a Static mesh with the correct name
+            if ( vehicle == null){
+                var static_mesh = GameObjects.Find(element => element.name == vehicleName);
+                Debug.Log(static_mesh.name);
+                pose = static_mesh.pose;
+                // vehicle = GameObject.FindGameObjectsWithTag(vehicleName);
+            }
+            else{
+                pose = vehicle.VehicleInterface.GetPose();
+            }
+            
+
+            // Need a wrapper in case there are no game objects with this name
+
+            return pose;
+            
+        }
+
+
+        public static void GetGameObjects(){
+            var all_objects = GameObject.FindObjectsOfType<GameObject>();
+            for (var i = 0; i < all_objects.Length; i++){
+                var single_object = new StaticMesh();
+                single_object.game_object = all_objects[i]
+                DataManager.SetToAirSim(all_objects[i].transform.position, ref single_object.pose.position);
+                DataManager.SetToAirSim(all_objects[i].transform.rotation, ref single_object.pose.orientation);
+                single_object.name = all_objects[i].name;
+                Debug.Log(single_object.name);
+                GameObjects.Add(single_object);
+            }
+
+            
         }
 
         private static CollisionInfo GetCollisionInfo(string vehicleName) {

@@ -14,9 +14,11 @@ namespace AirSimUnity {
         private bool isViewCamerasSet;
 
         private void Awake() {
+            VehicleCompanion.GetGameObjects();
             //Needs to be the first initialization in the Simulation if not done.
             if (AirSimSettings.GetSettings() == null)
             {
+                
                 AirSimSettings.Initialize();
             }
         }
