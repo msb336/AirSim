@@ -52,6 +52,8 @@ namespace AirSimUnity {
             {
                 Application.Quit();
             }
+            VehicleCompanion.PerformTransform();
+
         }
 
 
