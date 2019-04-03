@@ -23,7 +23,8 @@ namespace AirSimUnity {
     class TeleportClass
     {
         //* Change to unity version */
-        public Transform pose;
+        public Vector3 position = new Vector3();
+        public Quaternion rotation = new Quaternion();
         public string name;
         public bool triggered = false;
     }
@@ -33,7 +34,7 @@ namespace AirSimUnity {
         private static List<VehicleCompanion> Vehicles = new List<VehicleCompanion>();
 
         private static List<StaticMesh> GameObjects = new List<StaticMesh>();
-        private static TeleportClass teleport_;
+        private static TeleportClass teleport_ = new TeleportClass();
 
         private static int basePortId;
 
@@ -127,23 +128,22 @@ namespace AirSimUnity {
         private static bool SetPose(AirSimPose pose, bool ignoreCollision, string vehicleName) {
             var vehicle = Vehicles.Find(element => element.vehicleName == vehicleName);
             if ( vehicle == null){
-                var static_mesh = GameObjects.Find(element => element.name == vehicleName);
-                
+                var obj_idx = GameObjects.FindIndex(element => element.name == vehicleName);
+                var static_mesh = GameObjects[obj_idx];
                 if (static_mesh.name == null){
                     return false;
                 }
                 else{
-                    Debug.Log(static_mesh.name);
-                    Vector3 position;
-                    Quaternion rotation;
-                    Transform new_pose;
-                    AirSimVector test;
-                    DataManager.SetToUnity(pose.position, ref new_pose.position);
-                    DataManager.SetToUnity(pose.orientation, ref new_pose.rotation);
-                    teleport_.pose.position = new_pose.position;
-                    teleport_.pose.rotation = new_pose.rotation;
+                    static_mesh.pose = pose;
+                    Vector3 position = new Vector3();
+                    Quaternion rotation = new Quaternion();
+                    DataManager.SetToUnity(pose.position, ref position);
+                    DataManager.SetToUnity(pose.orientation, ref rotation);
+                    teleport_.position = position;
+                    teleport_.rotation = rotation;
                     teleport_.triggered = true;
                     teleport_.name = vehicleName;
+                    GameObjects[obj_idx] = static_mesh;
                     return true;
                 }
             }
@@ -153,23 +153,24 @@ namespace AirSimUnity {
             }
             // return true;
         }
+
         public static void PerformTransform()
         {
             if (teleport_.triggered)
             {
-                var static_mesh = GameObjects.Find(element => element.name == vehicleName);
-                static_mesh.tranform.position = teleport_.pose;
+                var static_mesh = GameObjects.Find(element => element.name == teleport_.name);
+                static_mesh.game_object.transform.position = teleport_.position;
+                static_mesh.game_object.transform.rotation = teleport_.rotation;
+                teleport_.triggered = false;
             }
         }
         private static AirSimPose GetPose(string vehicleName) {
             // All get pose calls, vehicle or otherwise, occur here
             var vehicle = Vehicles.Find(element => element.vehicleName == vehicleName);
-            Debug.Log(vehicle);
             AirSimPose pose;
             // Check if there is a Static mesh with the correct name
             if ( vehicle == null){
                 var static_mesh = GameObjects.Find(element => element.name == vehicleName);
-                Debug.Log(static_mesh.name);
                 pose = static_mesh.pose;
             }
             else{
