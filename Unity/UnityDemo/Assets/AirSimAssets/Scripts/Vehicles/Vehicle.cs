@@ -55,6 +55,7 @@ namespace AirSimUnity {
 
             InitializeVehicle();
 
+            VehicleCompanion.GetGameObjects();
             airsimInterface = VehicleCompanion.GetVehicleCompanion(this);
             isServerStarted = airsimInterface.StartVehicleServer(AirSimSettings.GetSettings().LocalHostIP);
 
@@ -76,6 +77,7 @@ namespace AirSimUnity {
                 DataManager.SetToAirSim(transform.position, ref currentPose.position);
                 DataManager.SetToAirSim(transform.rotation, ref currentPose.orientation);
             }
+            VehicleCompanion.PerformTransform();
         }
 
         //Ensure to call this method as the last statement, from derived class `LateUpdate()` method.
