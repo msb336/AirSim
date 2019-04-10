@@ -154,6 +154,18 @@ IF NOT EXIST AirLib\deps\eigen3 (
 )
 IF NOT EXIST AirLib\deps\eigen3 goto :buildfailed
 
+REM //---------- get GTest library ----------
+IF NOT EXIST AirLib\deps\gtest (
+    REM Set which commit to download.
+    REM Download
+    powershell -command "& { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; iwr https://github.com/google/googletest/archive/604ba376c3a407c6a40e39fbd0d5055c545f9898.zip -OutFile gtest.zip}"
+    powershell -command "& { Expand-Archive -Path gtest.zip -DestinationPath AirLib\deps }"
+    REM Rename "googletest-{sha}" folder to "gtest".
+    rename "AirLib\deps\googletest-604ba376c3a407c6a40e39fbd0d5055c545f9898" "gtest"
+    REM Remove zip.
+    del gtest.zip
+)
+IF NOT EXIST AirLib\deps\gtest goto :buildfailed
 
 REM //---------- now we have all dependencies to compile AirSim.sln which will also compile MavLinkCom ----------
 if "%buildMode%" == "--Debug" (
