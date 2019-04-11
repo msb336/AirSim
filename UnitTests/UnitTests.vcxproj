@@ -36,10 +36,13 @@
     <IncludePath>$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemGroup>
+    <ClInclude Include="Mock_ApiProvider.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gtest_main.cc" />
+    <ClCompile Include="Mock_MultirotorApiBase.h" />
+    <ClCompile Include="Mock_MultirotorRpcLibServer.h" />
     <ClCompile Include="test.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

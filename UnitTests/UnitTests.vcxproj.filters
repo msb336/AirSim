@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="test.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="Mock_MultirotorApiBase.h">
+      <Filter>Mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="Mock_MultirotorRpcLibServer.h">
+      <Filter>Mocks</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Mock_ApiProvider.h">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Mocks">
+      <UniqueIdentifier>{340fd667-4d74-4066-b1d3-f032f86e0e3f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
