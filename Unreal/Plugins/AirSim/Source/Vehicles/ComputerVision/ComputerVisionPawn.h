@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Runtime/Engine/Classes/GameFramework/SpectatorPawn.h"
 
 #include "physics/Kinematics.hpp"
 #include "common/AirSimSettings.hpp"
@@ -16,7 +17,7 @@
 
 
 UCLASS()
-class AComputerVisionPawn : public APawn
+class AComputerVisionPawn : public ASpectatorPawn
 {
     GENERATED_BODY()
 

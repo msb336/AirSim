@@ -50,7 +50,7 @@ void UManualPoseController::updateActorPose(float dt)
 
         FVector location = actor_->GetActorLocation();
         FRotator rotation = actor_->GetActorRotation();
-        actor_->SetActorLocationAndRotation(location + delta_position_, rotation + delta_rotation_);
+        actor_->SetActorLocationAndRotation(location + delta_position_, rotation + delta_rotation_, true);
         resetDelta();
     }
     else {
