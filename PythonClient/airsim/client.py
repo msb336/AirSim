@@ -120,6 +120,9 @@ class VehicleClient:
     def simListSceneObjects(self, name_regex = '.*'):
         return self.client.call('simListSceneObjects', name_regex)
 
+    def simLoadLevel(self, level_name):
+        return self.client.call('simLoadLevel', level_name)
+
     def simSetSegmentationObjectID(self, mesh_name, object_id, is_name_regex = False):
         return self.client.call('simSetSegmentationObjectID', mesh_name, object_id, is_name_regex)
     def simGetSegmentationObjectID(self, mesh_name):

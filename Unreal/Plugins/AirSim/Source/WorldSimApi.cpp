@@ -8,6 +8,26 @@ WorldSimApi::WorldSimApi(ASimModeBase* simmode)
 {
 }
 
+bool WorldSimApi::loadLevel(const std::string& level_name)
+{
+
+
+	bool success;
+	UAirBlueprintLib::RunCommandOnGameThread([this, level_name, &success]() {
+		if (simmode_->current_level_) {
+			simmode_->current_level_->SetShouldBeLoaded(false);
+		}
+		else { 
+			UE_LOG(LogTemp, Warning, TEXT("your junk is bunk"));
+		}
+		simmode_->current_level_ = ULevelStreamingDynamic::LoadLevelInstance(
+			simmode_->GetWorld(), FString(level_name.c_str()), FVector(0, 0, 0), FRotator(0, 0, 0), success);
+	});
+	
+
+	return success;
+}
+
 bool WorldSimApi::isPaused() const
 {
     return simmode_->isPaused();

@@ -49,6 +49,7 @@ public:
     void simSetWeatherParameter(WorldSimApiBase::WeatherParameter param, float val);
 
     vector<string> simListSceneObjects(const string& name_regex = string(".*")) const;
+	bool simLoadLevel(const string& level_name);
     Pose simGetObjectPose(const std::string& object_name) const;
     bool simSetObjectPose(const std::string& object_name, const Pose& pose, bool teleport = true);
     

@@ -199,6 +199,10 @@ RpcLibServerBase::RpcLibServerBase(ApiProvider* api_provider, const std::string&
         return getWorldSimApi()->listSceneObjects(name_regex);
     });
 
+	pimpl_->server.bind("simLoadLevel", [&](const std::string& level_name) -> bool {
+		return getWorldSimApi()->loadLevel(level_name);
+	});
+
     pimpl_->server.bind("simGetObjectPose", [&](const std::string& object_name) -> RpcLibAdapatorsBase::Pose {
         const auto& pose = getWorldSimApi()->getObjectPose(object_name); 
         return RpcLibAdapatorsBase::Pose(pose);

@@ -11,6 +11,7 @@
 #include <stdexcept>
 
 
+
 ASimHUD::ASimHUD()
 {
     static ConstructorHelpers::FClassFinder<UUserWidget> hud_widget_class(TEXT("WidgetBlueprint'/AirSim/Blueprints/BP_SimHUDWidget'"));
@@ -20,12 +21,14 @@ ASimHUD::ASimHUD()
 void ASimHUD::BeginPlay()
 {
     Super::BeginPlay();
+	pak_loader_.initialize();
 
     try {
         UAirBlueprintLib::OnBeginPlay();
         initializeSettings();
         setUnrealEngineSettings();
         createSimMode();
+		loadLevel();
         createMainWidget();
         setupInputBindings();
         if (simmode_)
@@ -280,6 +283,14 @@ std::string ASimHUD::getSimModeFromUser()
     }
     else
         return "Car";
+}
+
+void ASimHUD::loadLevel()
+{
+	FString level_name(AirSimSettings::singleton().level_name.c_str());
+	bool success;
+	if (simmode_)
+		simmode_->current_level_ = ULevelStreamingDynamic::LoadLevelInstance(this, level_name, FVector(0,0,0), FRotator(0,0,0), success);
 }
 
 void ASimHUD::createSimMode()

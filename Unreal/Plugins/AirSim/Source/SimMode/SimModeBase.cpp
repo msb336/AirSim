@@ -107,7 +107,6 @@ void ASimModeBase::checkVehicleReady()
                 UAirBlueprintLib::LogMessage("Tip: check connection info in settings.json", "", LogDebugLevel::Informational);
             }
         }
-
     }
 }
 

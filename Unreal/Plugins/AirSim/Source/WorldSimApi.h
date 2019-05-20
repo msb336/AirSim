@@ -14,6 +14,8 @@ public:
     WorldSimApi(ASimModeBase* simmode);
     virtual ~WorldSimApi() = default;
 
+	virtual bool loadLevel(const std::string& level_name) override;
+
     virtual bool isPaused() const override;
     virtual void reset() override;
     virtual void pause(bool is_paused) override;
@@ -62,4 +64,5 @@ private:
 private:
     ASimModeBase* simmode_;
     std::map<std::string, AAirSimCharacter*> chars_;
+	//ULevelStreamingDynamic* current_level_;
 };

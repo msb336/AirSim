@@ -320,6 +320,7 @@ private: //fields
 
 public: //fields
     std::string simmode_name = "";
+	std::string level_name = "";
 
     std::vector<SubwindowSetting> subwindow_settings;
     RecordingSetting recording_setting;
@@ -371,6 +372,7 @@ public: //methods
         checkSettingsVersion(settings_json);
 
         loadCoreSimModeSettings(settings_json, simmode_getter);
+		loadLevelSettings(settings_json);
         loadDefaultCameraSetting(settings_json, camera_defaults);
         loadCameraDirectorSetting(settings_json, camera_director, simmode_name);
         loadSubWindowsSettings(settings_json, subwindow_settings);
@@ -506,6 +508,11 @@ private:
                 physics_engine_name = "PhysX"; //this value is only informational for now
         }
     }
+
+	void loadLevelSettings(const Settings& settings_json)
+	{
+		level_name = settings_json.getString("Default Environment", "");
+	}
 
     void loadViewModeSettings(const Settings& settings_json)
     {

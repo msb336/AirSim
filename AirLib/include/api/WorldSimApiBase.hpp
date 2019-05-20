@@ -25,6 +25,10 @@ public:
 
     virtual ~WorldSimApiBase() = default;
 
+	// ------ Level setting apis ----- //
+	virtual bool loadLevel(const std::string& level_name) = 0;
+
+
     virtual bool isPaused() const = 0;
     virtual void reset() = 0;
     virtual void pause(bool is_paused) = 0;
