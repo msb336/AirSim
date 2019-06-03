@@ -50,6 +50,7 @@ public:
 
     vector<string> simListSceneObjects(const string& name_regex = string(".*")) const;
 	bool simLoadLevel(const string& level_name);
+	void simSpawnObject(const string& object_name, const string& load_component, const Pose& pose);
     Pose simGetObjectPose(const std::string& object_name) const;
     bool simSetObjectPose(const std::string& object_name, const Pose& pose, bool teleport = true);
     

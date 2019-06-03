@@ -15,7 +15,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetStringLibrary.h"
 #include "Engine/World.h"
-
 #include "Runtime/Landscape/Classes/LandscapeComponent.h"
 #include "common/AirSimSettings.hpp"
 #include <string>
@@ -46,7 +45,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Utils")
         static void LogMessage(const FString &prefix, const FString &suffix, LogDebugLevel level, float persist_sec = 60);
     static float GetWorldToMetersScale(const AActor* context);
-
     template<typename T>
     static T* GetActorComponent(AActor* actor, FString name);
 
@@ -75,6 +73,7 @@ public:
     }
 
     static std::vector<std::string> ListMatchingActors(const UObject *context, const std::string& name_regex);
+	static void ListMatchingMeshComponents(const UObject *context, std::vector<std::string>& results, const std::string& name_regex);
 
     static bool HasObstacle(const AActor* actor, const FVector& start, const FVector& end,
         const AActor* ignore_actor = nullptr, ECollisionChannel collision_channel = ECC_Visibility);

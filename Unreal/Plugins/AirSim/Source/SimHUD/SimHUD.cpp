@@ -21,7 +21,7 @@ ASimHUD::ASimHUD()
 void ASimHUD::BeginPlay()
 {
     Super::BeginPlay();
-	pak_loader_.initialize();
+	
 
     try {
         UAirBlueprintLib::OnBeginPlay();
@@ -33,6 +33,7 @@ void ASimHUD::BeginPlay()
         setupInputBindings();
         if (simmode_)
             simmode_->startApiServer();
+		
     }
     catch (std::exception& ex) {
         UAirBlueprintLib::LogMessageString("Error at startup: ", ex.what(), LogDebugLevel::Failure);
@@ -40,6 +41,7 @@ void ASimHUD::BeginPlay()
         //FGenericPlatformMisc::MessageBoxExt(EAppMsgType::Ok, TEXT("Error at Startup"), ANSI_TO_TCHAR(ex.what()));
         UAirBlueprintLib::ShowMessage(EAppMsgType::Ok, std::string("Error at startup: ") + ex.what(), "Error");
     }
+
 }
 
 void ASimHUD::Tick(float DeltaSeconds)

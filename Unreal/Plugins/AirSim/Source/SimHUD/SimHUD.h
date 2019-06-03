@@ -7,7 +7,6 @@
 #include "PIPCamera.h"
 #include "api/ApiServerBase.hpp"
 #include <memory>
-#include "PakLoader.h"
 
 #include "SimHUD.generated.h"
 
@@ -81,6 +80,4 @@ private:
     UPROPERTY() ASimModeBase* simmode_;
 
     APIPCamera* subwindow_cameras_[AirSimSettings::kSubwindowCount];
-
-	PakLoader pak_loader_;
 };

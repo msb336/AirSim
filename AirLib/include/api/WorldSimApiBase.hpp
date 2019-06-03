@@ -27,7 +27,7 @@ public:
 
 	// ------ Level setting apis ----- //
 	virtual bool loadLevel(const std::string& level_name) = 0;
-
+	virtual void spawnObject(const string& object_name, const string& load_component, const Pose& pose) = 0;
 
     virtual bool isPaused() const = 0;
     virtual void reset() = 0;

@@ -28,6 +28,48 @@ bool WorldSimApi::loadLevel(const std::string& level_name)
 	return success;
 }
 
+
+
+void WorldSimApi::spawnObject(const std::string& object_name, const std::string& load_object, const WorldSimApi::Pose& pose)
+{
+	FARFilter Filter;
+	Filter.ClassNames.Add(UStaticMesh::StaticClass()->GetFName());
+	Filter.PackagePaths.Add("/Game");
+	Filter.PackagePaths.Add("/Airsim");
+	Filter.bRecursivePaths = true;
+
+	FActorSpawnParameters new_actor_spawn_params; // new
+	new_actor_spawn_params.Name = FName(object_name.c_str()); // new
+	FTransform actor_transform = simmode_->getGlobalNedTransform().fromGlobalNed(pose);
+
+	TArray<FAssetData> AssetData;
+	UAirBlueprintLib::RunCommandOnGameThread([this, object_name, load_object, Filter, &AssetData, pose, &new_actor_spawn_params, &actor_transform]() {
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		AssetRegistryModule.Get().GetAssets(Filter, AssetData);
+		for (auto asset : AssetData)
+		{
+			if (asset.AssetName == FName(load_object.c_str()))
+			{
+				UStaticMesh* LoadObject = dynamic_cast<UStaticMesh*>(asset.FastGetAsset());
+				if (LoadObject)
+				{
+					AActor* NewActor = simmode_->GetWorld()->SpawnActor<AActor>(AActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, new_actor_spawn_params); // new
+					UStaticMeshComponent* ObjectComponent = NewObject<UStaticMeshComponent>(NewActor);
+					ObjectComponent->SetStaticMesh(LoadObject);
+					ObjectComponent->SetRelativeLocation(FVector(0, 0, 0));
+					ObjectComponent->SetHiddenInGame(false, true);
+					ObjectComponent->RegisterComponent();
+					NewActor->SetRootComponent(ObjectComponent);
+					NewActor->SetActorLocationAndRotation(actor_transform.GetLocation(), actor_transform.GetRotation(), false, nullptr, ETeleportType::TeleportPhysics);
+				}
+				break;
+			}
+		}
+	});
+
+}
+
+
 bool WorldSimApi::isPaused() const
 {
     return simmode_->isPaused();

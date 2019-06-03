@@ -5,6 +5,8 @@
 #include "api/WorldSimApiBase.hpp"
 #include "SimMode/SimModeBase.h"
 #include "AirSimCharacter.h"
+#include "Runtime/AssetRegistry/Public/AssetRegistryModule.h"
+#include "Components/StaticMeshComponent.h"
 #include <string>
 
 class WorldSimApi : public msr::airlib::WorldSimApiBase {
@@ -15,6 +17,7 @@ public:
     virtual ~WorldSimApi() = default;
 
 	virtual bool loadLevel(const std::string& level_name) override;
+	virtual void spawnObject(const std::string& object_name, const std::string& load_name, const WorldSimApi::Pose& pose) override;
 
     virtual bool isPaused() const override;
     virtual void reset() override;
