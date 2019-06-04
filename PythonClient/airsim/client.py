@@ -123,7 +123,9 @@ class VehicleClient:
     def simLoadLevel(self, level_name):
         return self.client.call('simLoadLevel', level_name)
     def simSpawnObject(self, object_name, load_name, pose):
-        self.client.call('simSpawnObject', object_name, load_name, pose)
+        return self.client.call('simSpawnObject', object_name, load_name, pose)
+    def simDestroyObject(self, object_name)
+        return self.client.call('simDestroyObject', object_name)
     def simSetSegmentationObjectID(self, mesh_name, object_id, is_name_regex = False):
         return self.client.call('simSetSegmentationObjectID', mesh_name, object_id, is_name_regex)
     def simGetSegmentationObjectID(self, mesh_name):
