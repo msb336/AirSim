@@ -352,6 +352,32 @@ std::vector<std::string> UAirBlueprintLib::ListMatchingActors(const UObject *con
     return results;
 }
 
+UObject* UAirBlueprintLib::GetMeshFromRegistry(const std::string& load_object)
+{
+	FARFilter Filter;
+	Filter.ClassNames.Add(UStaticMesh::StaticClass()->GetFName());
+	Filter.PackagePaths.Add("/Game");
+	Filter.PackagePaths.Add("/Airsim");
+	Filter.bRecursivePaths = true;
+
+	TArray<FAssetData> AssetData;
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	AssetRegistryModule.Get().GetAssets(Filter, AssetData);
+
+	UObject* LoadObject = NULL;
+	for (auto asset : AssetData)
+	{
+		if (asset.AssetName == FName(load_object.c_str()))
+		{
+			LoadObject = asset.FastGetAsset();
+			break;
+		}
+	}
+	return LoadObject;
+}
+
+
+
 
 bool UAirBlueprintLib::HasObstacle(const AActor* actor, const FVector& start, const FVector& end, const AActor* ignore_actor, ECollisionChannel collision_channel)
 {

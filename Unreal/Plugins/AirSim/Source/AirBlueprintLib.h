@@ -4,6 +4,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Runtime/AssetRegistry/Public/AssetRegistryModule.h"
 #include "GameFramework/Actor.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/PlayerInput.h"
@@ -74,6 +75,7 @@ public:
 
     static std::vector<std::string> ListMatchingActors(const UObject *context, const std::string& name_regex);
 	static void ListMatchingMeshComponents(const UObject *context, std::vector<std::string>& results, const std::string& name_regex);
+	static UObject* GetMeshFromRegistry(const std::string& load_object);
 
     static bool HasObstacle(const AActor* actor, const FVector& start, const FVector& end,
         const AActor* ignore_actor = nullptr, ECollisionChannel collision_channel = ECC_Visibility);

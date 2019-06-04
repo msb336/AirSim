@@ -22,53 +22,81 @@ bool WorldSimApi::loadLevel(const std::string& level_name)
 		}
 		simmode_->current_level_ = ULevelStreamingDynamic::LoadLevelInstance(
 			simmode_->GetWorld(), FString(level_name.c_str()), FVector(0, 0, 0), FRotator(0, 0, 0), success);
-	});
+	}, true);
 	
 
 	return success;
 }
 
-
-
-void WorldSimApi::spawnObject(const std::string& object_name, const std::string& load_object, const WorldSimApi::Pose& pose)
+bool WorldSimApi::destroyObject(const std::string& object_name)
 {
-	FARFilter Filter;
-	Filter.ClassNames.Add(UStaticMesh::StaticClass()->GetFName());
-	Filter.PackagePaths.Add("/Game");
-	Filter.PackagePaths.Add("/Airsim");
-	Filter.bRecursivePaths = true;
-
-	FActorSpawnParameters new_actor_spawn_params; // new
-	new_actor_spawn_params.Name = FName(object_name.c_str()); // new
-	FTransform actor_transform = simmode_->getGlobalNedTransform().fromGlobalNed(pose);
-
-	TArray<FAssetData> AssetData;
-	UAirBlueprintLib::RunCommandOnGameThread([this, object_name, load_object, Filter, &AssetData, pose, &new_actor_spawn_params, &actor_transform]() {
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-		AssetRegistryModule.Get().GetAssets(Filter, AssetData);
-		for (auto asset : AssetData)
+	bool result{ false };
+	UAirBlueprintLib::RunCommandOnGameThread([this, &object_name, &result]() {
+		AActor* actor = UAirBlueprintLib::FindActor<AActor>(simmode_, FString(object_name.c_str()));
+		if (actor)
 		{
-			if (asset.AssetName == FName(load_object.c_str()))
-			{
-				UStaticMesh* LoadObject = dynamic_cast<UStaticMesh*>(asset.FastGetAsset());
-				if (LoadObject)
-				{
-					AActor* NewActor = simmode_->GetWorld()->SpawnActor<AActor>(AActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, new_actor_spawn_params); // new
-					UStaticMeshComponent* ObjectComponent = NewObject<UStaticMeshComponent>(NewActor);
-					ObjectComponent->SetStaticMesh(LoadObject);
-					ObjectComponent->SetRelativeLocation(FVector(0, 0, 0));
-					ObjectComponent->SetHiddenInGame(false, true);
-					ObjectComponent->RegisterComponent();
-					NewActor->SetRootComponent(ObjectComponent);
-					NewActor->SetActorLocationAndRotation(actor_transform.GetLocation(), actor_transform.GetRotation(), false, nullptr, ETeleportType::TeleportPhysics);
-				}
-				break;
-			}
+			actor->Destroy();
+			result = actor->IsPendingKill();
 		}
-	});
-
+	}, true);
+	return result;
 }
 
+std::string WorldSimApi::spawnObject(std::string& object_name, const std::string& load_object, const WorldSimApi::Pose& pose)
+{
+	// Create struct for Location and Rotation of actor in Unreal
+	FTransform actor_transform = simmode_->getGlobalNedTransform().fromGlobalNed(pose);
+	bool found_object;
+	UAirBlueprintLib::RunCommandOnGameThread([this, load_object, &object_name, &actor_transform, &found_object]() {
+			// Find mesh in /Game and /AirSim asset registry. When more plugins are added this function will have to change
+			UStaticMesh* LoadObject = dynamic_cast<UStaticMesh*>(UAirBlueprintLib::GetMeshFromRegistry(load_object));
+			if (LoadObject)
+			{
+				std::vector<std::string> matching_names = UAirBlueprintLib::ListMatchingActors(simmode_->GetWorld(), ".*"+object_name+".*");
+				if (matching_names.size() > 0)
+				{
+					size_t greatest_num{ 0 }, result{ 0 };
+					for (auto match : matching_names)
+					{
+						std::string number_extension = match.substr(match.find_last_not_of("0123456789") + 1);
+						if (number_extension != "")
+						{
+							result = std::stoi(number_extension);
+							greatest_num = greatest_num > result ? greatest_num : result;
+						}
+					}
+					object_name += std::to_string(greatest_num + 1);
+				}
+				FActorSpawnParameters new_actor_spawn_params;
+				new_actor_spawn_params.Name = FName(object_name.c_str());
+				this->createNewActor(new_actor_spawn_params, actor_transform, LoadObject);
+				found_object  = true;
+			}
+			else
+			{
+				found_object = false;
+			}
+	}, true);
+
+	if (!found_object)
+	{
+		throw std::invalid_argument(
+			"There were no objects with name " + load_object + " found in the Registry");
+	}
+	return object_name;
+}
+
+void WorldSimApi::createNewActor(const FActorSpawnParameters& spawn_params, const FTransform& actor_transform, UStaticMesh* static_mesh)
+{
+	AActor* NewActor = simmode_->GetWorld()->SpawnActor<AActor>(AActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, spawn_params); // new
+	UStaticMeshComponent* ObjectComponent = NewObject<UStaticMeshComponent>(NewActor);
+	ObjectComponent->SetStaticMesh(static_mesh);
+	ObjectComponent->SetRelativeLocation(FVector(0, 0, 0));
+	ObjectComponent->SetHiddenInGame(false, true);
+	ObjectComponent->RegisterComponent();
+	NewActor->SetRootComponent(ObjectComponent);
+	NewActor->SetActorLocationAndRotation(actor_transform.GetLocation(), actor_transform.GetRotation(), false, nullptr, ETeleportType::TeleportPhysics);
+}
 
 bool WorldSimApi::isPaused() const
 {

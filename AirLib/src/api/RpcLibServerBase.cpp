@@ -202,8 +202,11 @@ RpcLibServerBase::RpcLibServerBase(ApiProvider* api_provider, const std::string&
 	pimpl_->server.bind("simLoadLevel", [&](const std::string& level_name) -> bool {
 		return getWorldSimApi()->loadLevel(level_name);
 	});
-	pimpl_->server.bind("simSpawnObject", [&](const string& object_name, const string& load_component, const RpcLibAdapatorsBase::Pose& pose) -> void {
-		getWorldSimApi()->spawnObject(object_name, load_component, pose.to());
+	pimpl_->server.bind("simSpawnObject", [&](string& object_name, const string& load_component, const RpcLibAdapatorsBase::Pose& pose) -> string {
+		return getWorldSimApi()->spawnObject(object_name, load_component, pose.to());
+	});
+	pimpl_->server.bind("simDestroyObject", [&](const string& object_name) -> bool {
+		return getWorldSimApi()->destroyObject(object_name);
 	});
 
     pimpl_->server.bind("simGetObjectPose", [&](const std::string& object_name) -> RpcLibAdapatorsBase::Pose {

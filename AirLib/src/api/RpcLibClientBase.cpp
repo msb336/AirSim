@@ -277,10 +277,15 @@ bool RpcLibClientBase::simLoadLevel(const string& level_name)
 {
 	return pimpl_->client.call("simLoadLevel", level_name).as<bool>();
 }
-void RpcLibClientBase::simSpawnObject(const string& object_name, const string& load_component, const msr::airlib::Pose& pose)
+string RpcLibClientBase::simSpawnObject(string& object_name, const string& load_component, const msr::airlib::Pose& pose)
 {
-	pimpl_->client.call("simSpawnObject", object_name, load_component, RpcLibAdapatorsBase::Pose(pose));
+	return pimpl_->client.call("simSpawnObject", object_name, load_component, RpcLibAdapatorsBase::Pose(pose)).as<string>();
 }
+bool RpcLibClientBase::simDestroyObject(const string& object_name)
+{
+	return pimpl_->client.call("simDestroyObject", object_name).as<bool>();
+}
+
 
 msr::airlib::Pose RpcLibClientBase::simGetObjectPose(const std::string& object_name) const
 {
