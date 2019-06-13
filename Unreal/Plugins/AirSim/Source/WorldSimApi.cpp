@@ -42,12 +42,12 @@ bool WorldSimApi::destroyObject(const std::string& object_name)
 	return result;
 }
 
-std::string WorldSimApi::spawnObject(std::string& object_name, const std::string& load_object, const WorldSimApi::Pose& pose)
+std::string WorldSimApi::spawnObject(std::string& object_name, const std::string& load_object, const WorldSimApi::Pose& pose, const WorldSimApi::Vector3r& scale)
 {
 	// Create struct for Location and Rotation of actor in Unreal
 	FTransform actor_transform = simmode_->getGlobalNedTransform().fromGlobalNed(pose);
 	bool found_object;
-	UAirBlueprintLib::RunCommandOnGameThread([this, load_object, &object_name, &actor_transform, &found_object]() {
+	UAirBlueprintLib::RunCommandOnGameThread([this, load_object, &object_name, &actor_transform, &found_object, &scale]() {
 			// Find mesh in /Game and /AirSim asset registry. When more plugins are added this function will have to change
 			UStaticMesh* LoadObject = dynamic_cast<UStaticMesh*>(UAirBlueprintLib::GetMeshFromRegistry(load_object));
 			if (LoadObject)
@@ -69,7 +69,7 @@ std::string WorldSimApi::spawnObject(std::string& object_name, const std::string
 				}
 				FActorSpawnParameters new_actor_spawn_params;
 				new_actor_spawn_params.Name = FName(object_name.c_str());
-				this->createNewActor(new_actor_spawn_params, actor_transform, LoadObject);
+				this->createNewActor(new_actor_spawn_params, actor_transform, scale, LoadObject);
 				found_object  = true;
 			}
 			else
@@ -86,12 +86,13 @@ std::string WorldSimApi::spawnObject(std::string& object_name, const std::string
 	return object_name;
 }
 
-void WorldSimApi::createNewActor(const FActorSpawnParameters& spawn_params, const FTransform& actor_transform, UStaticMesh* static_mesh)
+void WorldSimApi::createNewActor(const FActorSpawnParameters& spawn_params, const FTransform& actor_transform, const Vector3r& scale, UStaticMesh* static_mesh)
 {
 	AActor* NewActor = simmode_->GetWorld()->SpawnActor<AActor>(AActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, spawn_params); // new
 	UStaticMeshComponent* ObjectComponent = NewObject<UStaticMeshComponent>(NewActor);
 	ObjectComponent->SetStaticMesh(static_mesh);
 	ObjectComponent->SetRelativeLocation(FVector(0, 0, 0));
+    ObjectComponent->SetWorldScale3D(FVector(scale[0], scale[1], scale[2]));
 	ObjectComponent->SetHiddenInGame(false, true);
 	ObjectComponent->RegisterComponent();
 	NewActor->SetRootComponent(ObjectComponent);
