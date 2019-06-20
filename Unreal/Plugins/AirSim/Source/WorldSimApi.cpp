@@ -1,5 +1,4 @@
 #include "WorldSimApi.h"
-#include "AirBlueprintLib.h"
 #include "common/common_utils/Utils.hpp"
 #include "Weather/WeatherLib.h"
 
@@ -10,22 +9,19 @@ WorldSimApi::WorldSimApi(ASimModeBase* simmode)
 
 bool WorldSimApi::loadLevel(const std::string& level_name)
 {
-
-
-	bool success;
-	UAirBlueprintLib::RunCommandOnGameThread([this, level_name, &success]() {
-		if (simmode_->current_level_) {
-			simmode_->current_level_->SetShouldBeLoaded(false);
-		}
-		else { 
-			UE_LOG(LogTemp, Warning, TEXT("your junk is bunk"));
-		}
-		simmode_->current_level_ = ULevelStreamingDynamic::LoadLevelInstance(
-			simmode_->GetWorld(), FString(level_name.c_str()), FVector(0, 0, 0), FRotator(0, 0, 0), success);
+	UAirBlueprintLib::RunCommandOnGameThread([this, level_name]() {
+		this->current_level_ = UAirBlueprintLib::loadLevel(this->simmode_->GetWorld(), level_name);
 	}, true);
-	
 
-	return success;
+	pause(true);
+	while (!this->current_level_->IsLevelLoaded())
+	{
+		pause(true);
+	}
+	reset();
+	pause(false);
+
+	return true;
 }
 
 bool WorldSimApi::destroyObject(const std::string& object_name)

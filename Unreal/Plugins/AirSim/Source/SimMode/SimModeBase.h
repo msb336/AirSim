@@ -5,7 +5,6 @@
 #include "Engine/DirectionalLight.h"
 #include "GameFramework/Actor.h"
 #include "ParticleDefinitions.h"
-#include "Runtime/Engine/Classes/Engine/LevelStreamingDynamic.h"
 
 #include <string>
 #include "CameraDirector.h"
@@ -35,8 +34,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Recording")
     bool toggleRecording();
 
-public:
-	ULevelStreamingDynamic* current_level_;
 public:	
     // Sets default values for this actor's properties
     ASimModeBase();

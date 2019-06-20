@@ -289,10 +289,18 @@ std::string ASimHUD::getSimModeFromUser()
 
 void ASimHUD::loadLevel()
 {
-	FString level_name(AirSimSettings::singleton().level_name.c_str());
-	bool success;
 	if (simmode_)
-		simmode_->current_level_ = ULevelStreamingDynamic::LoadLevelInstance(this, level_name, FVector(0,0,0), FRotator(0,0,0), success);
+	{
+		ULevelStreamingDynamic* level;
+		if (AirSimSettings::singleton().level_name != "") 
+			level = UAirBlueprintLib::loadLevel(simmode_->GetWorld(), AirSimSettings::singleton().level_name);
+		else 
+			level = UAirBlueprintLib::loadLevel(simmode_->GetWorld(), "Blocks");
+	
+		UAirBlueprintLib::RunCommandOnGameThread([this]() { simmode_->reset(); }, true);
+	}
+		
+		
 }
 
 void ASimHUD::createSimMode()

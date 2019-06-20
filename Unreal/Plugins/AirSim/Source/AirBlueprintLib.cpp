@@ -72,6 +72,23 @@ void UAirBlueprintLib::setSimulatePhysics(AActor* actor, bool simulate_physics)
     }
 }
 
+ULevelStreamingDynamic* UAirBlueprintLib::loadLevel(UObject* context, const std::string& level_name)
+{
+	static ULevelStreamingDynamic* CURRENT_LEVEL;
+	bool success;
+	auto new_level = ULevelStreamingDynamic::LoadLevelInstance(
+			context, FString(level_name.c_str()), FVector(0, 0, 0), FRotator(0, 0, 0), success);
+
+	if (success)
+	{
+		if(CURRENT_LEVEL->IsValidLowLevel())
+			CURRENT_LEVEL->SetShouldBeLoaded(false);
+		CURRENT_LEVEL = new_level;
+	}
+
+	return CURRENT_LEVEL;
+}
+
 std::vector<UPrimitiveComponent*> UAirBlueprintLib::getPhysicsComponents(AActor* actor)
 {
     std::vector<UPrimitiveComponent*> phys_comps;

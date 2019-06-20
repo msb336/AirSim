@@ -17,6 +17,9 @@
 #include "Kismet/KismetStringLibrary.h"
 #include "Engine/World.h"
 #include "Runtime/Landscape/Classes/LandscapeComponent.h"
+#include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
+#include "Runtime/Engine/Classes/Engine/LevelStreamingDynamic.h"
+#include "Runtime/Core/Public/HAL/FileManager.h"
 #include "common/AirSimSettings.hpp"
 #include <string>
 #include <regex>
@@ -38,6 +41,11 @@ UCLASS()
 class UAirBlueprintLib : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
+private:
+	struct LevelLoadingObject
+	{
+		ULevelStreamingDynamic* level;
+	};
 
 public:
     static void OnBeginPlay();
@@ -74,7 +82,7 @@ public:
     }
 
     static std::vector<std::string> ListMatchingActors(const UObject *context, const std::string& name_regex);
-	static void ListMatchingMeshComponents(const UObject *context, std::vector<std::string>& results, const std::string& name_regex);
+	static ULevelStreamingDynamic* loadLevel(UObject* context, const std::string& level_name);
 	static UObject* GetMeshFromRegistry(const std::string& load_object);
 
     static bool HasObstacle(const AActor* actor, const FVector& start, const FVector& end,

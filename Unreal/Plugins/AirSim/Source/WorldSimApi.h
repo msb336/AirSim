@@ -6,6 +6,7 @@
 #include "SimMode/SimModeBase.h"
 #include "AirSimCharacter.h"
 #include "Components/StaticMeshComponent.h"
+#include "AirBlueprintLib.h"
 #include <string>
 
 class WorldSimApi : public msr::airlib::WorldSimApiBase {
@@ -68,5 +69,5 @@ private:
 private:
     ASimModeBase* simmode_;
     std::map<std::string, AAirSimCharacter*> chars_;
-	//ULevelStreamingDynamic* current_level_;
+	ULevelStreamingDynamic* current_level_;
 };
