@@ -277,9 +277,20 @@ bool RpcLibClientBase::simLoadLevel(const string& level_name)
 {
 	return pimpl_->client.call("simLoadLevel", level_name).as<bool>();
 }
-string RpcLibClientBase::simSpawnObject(string& object_name, const string& load_component, const msr::airlib::Pose& pose)
+string RpcLibClientBase::simSpawnObject(string& object_name, const string& load_component, const Pose& pose, const Vector3r& scale)
 {
-	return pimpl_->client.call("simSpawnObject", object_name, load_component, RpcLibAdapatorsBase::Pose(pose)).as<string>();
+	return pimpl_->client.call("simSpawnObject", object_name, load_component,
+        RpcLibAdapatorsBase::Pose(pose), RpcLibAdapatorsBase::Vector3r(scale)).as<string>();
+}
+string RpcLibClientBase::simSpawnObject(string& object_name, const string& load_component, const Pose& pose, const float& scale_x, const float& scale_y, const float& scale_z)
+{
+	return pimpl_->client.call("simSpawnObject", object_name, load_component, 
+    RpcLibAdapatorsBase::Pose(pose), RpcLibAdapatorsBase::Vector3r(Vector3r(scale_x, scale_y, scale_z))).as<string>();
+}
+string RpcLibClientBase::simSpawnObject(string& object_name, const string& load_component, const Pose& pose, const float& scale)
+{
+	return pimpl_->client.call("simSpawnObject", object_name, load_component, 
+    RpcLibAdapatorsBase::Pose(pose), RpcLibAdapatorsBase::Vector3r(Vector3r(scale, scale, scale))).as<string>();
 }
 bool RpcLibClientBase::simDestroyObject(const string& object_name)
 {

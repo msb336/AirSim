@@ -122,8 +122,17 @@ class VehicleClient:
 
     def simLoadLevel(self, level_name):
         return self.client.call('simLoadLevel', level_name)
-    def simSpawnObject(self, object_name, load_name, pose):
-        return self.client.call('simSpawnObject', object_name, load_name, pose)
+    def simSpawnObject(self, object_name, load_name, pose, *argv):
+        if len(argv) == 3:
+            scale_vector = Vector3r(argv[0], argv[1], argv[2])
+        elif len(argv) == 1:
+            if isinstance(argv[0], (int, float)):
+                scale_vector = Vector3r(argv[0], argv[0], argv[0])
+            else:
+                scale_vector = argv[0]
+        else:
+            scale_vector = Vector3r(1,1,1)
+        return self.client.call('simSpawnObject', object_name, load_name, pose, scale_vector)
     def simDestroyObject(self, object_name):
         return self.client.call('simDestroyObject', object_name)
     def simSetSegmentationObjectID(self, mesh_name, object_id, is_name_regex = False):

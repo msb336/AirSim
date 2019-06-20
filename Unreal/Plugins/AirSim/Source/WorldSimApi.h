@@ -12,12 +12,13 @@
 class WorldSimApi : public msr::airlib::WorldSimApiBase {
 public:
     typedef msr::airlib::Pose Pose;
+    typedef msr::airlib::Vector3r Vector3r;
 
     WorldSimApi(ASimModeBase* simmode);
     virtual ~WorldSimApi() = default;
 
 	virtual bool loadLevel(const std::string& level_name) override;
-	virtual std::string spawnObject(std::string& object_name, const std::string& load_name, const WorldSimApi::Pose& pose) override;
+	virtual std::string spawnObject(std::string& object_name, const std::string& load_name, const WorldSimApi::Pose& pose, const WorldSimApi::Vector3r& scale) override;
 	virtual bool destroyObject(const std::string& object_name) override;
 
     virtual bool isPaused() const override;
@@ -62,7 +63,7 @@ public:
 private:
     AAirSimCharacter* getAirSimCharacter(const std::string& character_name);
     const AAirSimCharacter* getAirSimCharacter(const std::string& character_name) const;
-	void createNewActor(const FActorSpawnParameters& spawn_params, const FTransform& actor_transform, UStaticMesh* static_mesh);
+	void createNewActor(const FActorSpawnParameters& spawn_params, const FTransform& actor_transform, const Vector3r& scale, UStaticMesh* static_mesh);
 
 
 
