@@ -8,15 +8,19 @@
 			"Name": "AirSimExe",
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
-			"AdditionalDependencies": [
-				"AirSim"
-			]
+      "AdditionalDependencies": [
+        "AirSim"
+      ]
 		}
 	],
 	"Plugins": [
 		{
 			"Name": "AirSim",
 			"Enabled": true
+		},
+		{
+			"Name" : "DlcMaps",
+			"Enabled" : true
 		}
 	]
 }
