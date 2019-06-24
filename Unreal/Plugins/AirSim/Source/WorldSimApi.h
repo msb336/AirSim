@@ -18,6 +18,7 @@ public:
     virtual ~WorldSimApi() = default;
 
 	virtual bool loadLevel(const std::string& level_name) override;
+	
 	virtual std::string spawnObject(std::string& object_name, const std::string& load_name, const WorldSimApi::Pose& pose, const WorldSimApi::Vector3r& scale) override;
 	virtual bool destroyObject(const std::string& object_name) override;
 
@@ -64,11 +65,10 @@ private:
     AAirSimCharacter* getAirSimCharacter(const std::string& character_name);
     const AAirSimCharacter* getAirSimCharacter(const std::string& character_name) const;
 	void createNewActor(const FActorSpawnParameters& spawn_params, const FTransform& actor_transform, const Vector3r& scale, UStaticMesh* static_mesh);
-
-
+	void spawnPlayer();
 
 private:
     ASimModeBase* simmode_;
     std::map<std::string, AAirSimCharacter*> chars_;
-	ULevelStreamingDynamic* current_level_;
+	UAirsimLevelStreaming* current_level_;
 };

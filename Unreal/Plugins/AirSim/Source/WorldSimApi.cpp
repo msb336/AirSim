@@ -2,6 +2,7 @@
 #include "common/common_utils/Utils.hpp"
 #include "Weather/WeatherLib.h"
 
+
 WorldSimApi::WorldSimApi(ASimModeBase* simmode)
     : simmode_(simmode)
 {
@@ -9,19 +10,33 @@ WorldSimApi::WorldSimApi(ASimModeBase* simmode)
 
 bool WorldSimApi::loadLevel(const std::string& level_name)
 {
+	bool success;
+	using namespace std::chrono_literals;
+
 	UAirBlueprintLib::RunCommandOnGameThread([this, level_name]() {
+		__debugbreak();
 		this->current_level_ = UAirBlueprintLib::loadLevel(this->simmode_->GetWorld(), level_name);
 	}, true);
 
-	pause(true);
-	while (!this->current_level_->IsLevelLoaded())
+	if (this->current_level_)
 	{
-		pause(true);
-	}
-	reset();
-	pause(false);
+		success = true;
 
-	return true;
+		//Wait some time for level to load --> this is super hacky
+		std::this_thread::sleep_for(10s);
+		spawnPlayer();
+	}
+	else
+		success = false;
+	return success;
+}
+
+void WorldSimApi::spawnPlayer()
+{
+	UE_LOG(LogTemp, Log, TEXT("spawning player"));
+	UAirBlueprintLib::RunCommandOnGameThread([this]() {
+		UAirBlueprintLib::spawnPlayer(this->simmode_->GetWorld());
+	}, true);
 }
 
 bool WorldSimApi::destroyObject(const std::string& object_name)

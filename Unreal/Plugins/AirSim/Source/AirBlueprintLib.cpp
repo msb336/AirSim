@@ -72,21 +72,51 @@ void UAirBlueprintLib::setSimulatePhysics(AActor* actor, bool simulate_physics)
     }
 }
 
-ULevelStreamingDynamic* UAirBlueprintLib::loadLevel(UObject* context, const std::string& level_name)
+UAirsimLevelStreaming* UAirBlueprintLib::loadLevel(UObject* context, const std::string& level_name)
 {
-	static ULevelStreamingDynamic* CURRENT_LEVEL;
+	static UAirsimLevelStreaming* CURRENT_LEVEL;
 	bool success;
-	auto new_level = ULevelStreamingDynamic::LoadLevelInstance(
+	auto world_origin = UGameplayStatics::GetWorldOriginLocation(context->GetWorld());
+	UE_LOG(LogTemp, Log, TEXT("world origin %d"), world_origin[0]);
+	UAirsimLevelStreaming* new_level = UAirsimLevelStreaming::LoadAirsimLevelInstance(
 			context, FString(level_name.c_str()), FVector(0, 0, 0), FRotator(0, 0, 0), success);
-
 	if (success)
 	{
 		if(CURRENT_LEVEL->IsValidLowLevel())
 			CURRENT_LEVEL->SetShouldBeLoaded(false);
-		CURRENT_LEVEL = new_level;
+		CURRENT_LEVEL = new_level;	
+	}
+	return CURRENT_LEVEL;
+}
+
+void UAirBlueprintLib::spawnPlayer(UObject* context)
+{
+	APawn* player_pawn = UGameplayStatics::GetPlayerPawn(context, 0);
+	std::string player_start{ "" };
+	std::vector<std::string> level_spawn_list = ListMatchingActors(context, ".*[Pp]layer[Ss]tart.*");
+
+
+	FVector location{ 0,0,0 };
+	if (level_spawn_list.size() > 1)
+	{
+		for (auto spawn_point_name : level_spawn_list)
+		{
+			if (spawn_point_name.find("PIE") == std::string::npos)
+			{
+				AActor* player_start_actor = FindActor<AActor>(context, FString(spawn_point_name.c_str()));
+				location = player_start_actor->GetActorLocation();
+				break;
+			}
+		}
+	}
+	else if (level_spawn_list.size() == 1)
+	{
+		AActor* player_start_actor = FindActor<AActor>(context, FString(level_spawn_list[0].c_str()));
+		location = player_start_actor->GetActorLocation();
 	}
 
-	return CURRENT_LEVEL;
+	player_pawn->SetActorLocation(location);
+
 }
 
 std::vector<UPrimitiveComponent*> UAirBlueprintLib::getPhysicsComponents(AActor* actor)
