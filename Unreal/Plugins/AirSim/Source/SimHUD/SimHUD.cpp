@@ -289,6 +289,7 @@ std::string ASimHUD::getSimModeFromUser()
 
 void ASimHUD::loadLevel()
 {
+	using namespace std::chrono_literals;
 	if (simmode_)
 	{
 		ULevelStreamingDynamic* level;
@@ -296,11 +297,17 @@ void ASimHUD::loadLevel()
 			level = UAirBlueprintLib::loadLevel(simmode_->GetWorld(), AirSimSettings::singleton().level_name);
 		else 
 			level = UAirBlueprintLib::loadLevel(simmode_->GetWorld(), "Blocks");
-	
-		UAirBlueprintLib::RunCommandOnGameThread([this]() { simmode_->reset(); }, true);
+
+		bool success{ false };
+		int counter{ 3 };
+		while (!success && counter--)
+		{
+			UAirBlueprintLib::RunCommandOnGameThread([&]() {
+				UAirBlueprintLib::spawnPlayer(simmode_->GetWorld(), level, success); simmode_->reset();
+			}, true);
+			std::this_thread::sleep_for(1s);
+		}
 	}
-		
-		
 }
 
 void ASimHUD::createSimMode()

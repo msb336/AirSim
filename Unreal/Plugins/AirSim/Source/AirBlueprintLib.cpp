@@ -89,12 +89,11 @@ UAirsimLevelStreaming* UAirBlueprintLib::loadLevel(UObject* context, const std::
 	return CURRENT_LEVEL;
 }
 
-void UAirBlueprintLib::spawnPlayer(UObject* context)
+void UAirBlueprintLib::spawnPlayer(UObject* context, ULevelStreamingDynamic* level, bool& success)
 {
 	APawn* player_pawn = UGameplayStatics::GetPlayerPawn(context, 0);
 	std::string player_start{ "" };
 	std::vector<std::string> level_spawn_list = ListMatchingActors(context, ".*[Pp]layer[Ss]tart.*");
-
 
 	FVector location{ 0,0,0 };
 	if (level_spawn_list.size() > 1)
@@ -105,17 +104,21 @@ void UAirBlueprintLib::spawnPlayer(UObject* context)
 			{
 				AActor* player_start_actor = FindActor<AActor>(context, FString(spawn_point_name.c_str()));
 				location = player_start_actor->GetActorLocation();
+				success = true;
 				break;
 			}
 		}
 	}
 	else if (level_spawn_list.size() == 1)
 	{
-		AActor* player_start_actor = FindActor<AActor>(context, FString(level_spawn_list[0].c_str()));
+		auto player_start_actor = FindActor<AActor>(context, FString(level_spawn_list[0].c_str()));
 		location = player_start_actor->GetActorLocation();
+		success = true;
 	}
+	else
+		success = false;
 
-	player_pawn->SetActorLocation(location);
+	context->GetWorld()->SetNewWorldOrigin(FIntVector(location.X, location.Y, location.Z));
 
 }
 
@@ -180,6 +183,12 @@ void UAirBlueprintLib::enableViewportRendering(AActor* context, bool enable)
 void UAirBlueprintLib::OnBeginPlay()
 {
     image_wrapper_module_ = &FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName("ImageWrapper"));
+	
+
+	//Load all plugin content
+	FString path = FPaths::GameContentDir(); //FPaths::ProjectDir() + TEXT("Plugins/DlcTest/Content/");
+	FPackageName::RegisterMountPoint(TEXT("/DlcTest/"), path);
+	UE_LOG(LogTemp, Log, TEXT("mount /DlcTest/ path: %s"), *path);
 }
 
 void UAirBlueprintLib::OnEndPlay()
@@ -403,6 +412,7 @@ UObject* UAirBlueprintLib::GetMeshFromRegistry(const std::string& load_object)
 {
 	FARFilter Filter;
 	Filter.ClassNames.Add(UStaticMesh::StaticClass()->GetFName());
+	Filter.ClassNames.Add(UWorld::StaticClass()->GetFName());
 	//Filter.PackagePaths.Add("/Game");
 	//Filter.PackagePaths.Add("/Airsim");
 	Filter.bRecursivePaths = true;
@@ -414,11 +424,11 @@ UObject* UAirBlueprintLib::GetMeshFromRegistry(const std::string& load_object)
 	UObject* LoadObject = NULL;
 	for (auto asset : AssetData)
 	{
+		UE_LOG(LogTemp, Log, TEXT("Asset path: %s"), *asset.PackagePath.ToString());
 		if (asset.AssetName == FName(load_object.c_str()))
 		{
 			LoadObject = asset.GetAsset();
-			//LoadObject = asset.FastGetAsset();
-			break;
+			//break;
 		}
 	}
 	return LoadObject;

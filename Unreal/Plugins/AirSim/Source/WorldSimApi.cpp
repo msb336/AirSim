@@ -21,9 +21,7 @@ bool WorldSimApi::loadLevel(const std::string& level_name)
 	if (this->current_level_)
 	{
 		success = true;
-
-		//Wait some time for level to load --> this is super hacky
-		std::this_thread::sleep_for(10s);
+		std::this_thread::sleep_for(2s);
 		spawnPlayer();
 	}
 	else
@@ -33,10 +31,19 @@ bool WorldSimApi::loadLevel(const std::string& level_name)
 
 void WorldSimApi::spawnPlayer()
 {
+	using namespace std::chrono_literals;
 	UE_LOG(LogTemp, Log, TEXT("spawning player"));
-	UAirBlueprintLib::RunCommandOnGameThread([this]() {
-		UAirBlueprintLib::spawnPlayer(this->simmode_->GetWorld());
-	}, true);
+	bool success{ false };
+	int counter{ 3 };
+	while (!success && counter--)
+	{
+		UAirBlueprintLib::RunCommandOnGameThread([&]() {
+			UAirBlueprintLib::spawnPlayer(this->simmode_->GetWorld(), this->current_level_, success);
+		}, true);
+		std::this_thread::sleep_for(2s);
+	}
+
+	reset();
 }
 
 bool WorldSimApi::destroyObject(const std::string& object_name)
