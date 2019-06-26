@@ -21,7 +21,6 @@ ASimHUD::ASimHUD()
 void ASimHUD::BeginPlay()
 {
     Super::BeginPlay();
-	
 
     try {
         UAirBlueprintLib::OnBeginPlay();
@@ -298,15 +297,19 @@ void ASimHUD::loadLevel()
 		else 
 			level = UAirBlueprintLib::loadLevel(simmode_->GetWorld(), "Blocks");
 
-		bool success{ false };
-		int counter{ 3 };
-		while (!success && counter--)
-		{
-			UAirBlueprintLib::RunCommandOnGameThread([&]() {
-				UAirBlueprintLib::spawnPlayer(simmode_->GetWorld(), level, success); simmode_->reset();
-			}, true);
-			std::this_thread::sleep_for(1s);
-		}
+		//bool success{ false };
+		//int counter{ 10 };
+		//while (!success && counter--)
+		//{
+		//	UAirBlueprintLib::RunCommandOnGameThread([&]() {
+		//		UAirBlueprintLib::spawnPlayer(simmode_->GetWorld(), level, success);
+		//	}, true);
+		//	std::this_thread::sleep_for(1s);
+		//}
+		//if (success)
+		//{
+		//	simmode_->reset();
+		//}
 	}
 }
 

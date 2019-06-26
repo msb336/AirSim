@@ -185,10 +185,10 @@ void UAirBlueprintLib::OnBeginPlay()
     image_wrapper_module_ = &FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName("ImageWrapper"));
 	
 
-	//Load all plugin content
-	FString path = FPaths::GameContentDir(); //FPaths::ProjectDir() + TEXT("Plugins/DlcTest/Content/");
-	FPackageName::RegisterMountPoint(TEXT("/DlcTest/"), path);
-	UE_LOG(LogTemp, Log, TEXT("mount /DlcTest/ path: %s"), *path);
+	////Load all plugin content
+	//FString path = FPaths::GameContentDir(); //FPaths::ProjectDir() + TEXT("Plugins/DlcTest/Content/");
+	//FPackageName::RegisterMountPoint(TEXT("/DlcTest/"), path);
+	//UE_LOG(LogTemp, Log, TEXT("mount /DlcTest/ path: %s"), *path);
 }
 
 void UAirBlueprintLib::OnEndPlay()

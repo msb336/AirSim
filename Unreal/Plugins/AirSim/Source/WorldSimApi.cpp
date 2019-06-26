@@ -14,7 +14,6 @@ bool WorldSimApi::loadLevel(const std::string& level_name)
 	using namespace std::chrono_literals;
 
 	UAirBlueprintLib::RunCommandOnGameThread([this, level_name]() {
-		__debugbreak();
 		this->current_level_ = UAirBlueprintLib::loadLevel(this->simmode_->GetWorld(), level_name);
 	}, true);
 
