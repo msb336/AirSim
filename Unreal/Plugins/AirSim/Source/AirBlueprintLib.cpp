@@ -412,9 +412,6 @@ UObject* UAirBlueprintLib::GetMeshFromRegistry(const std::string& load_object)
 {
 	FARFilter Filter;
 	Filter.ClassNames.Add(UStaticMesh::StaticClass()->GetFName());
-	Filter.ClassNames.Add(UWorld::StaticClass()->GetFName());
-	//Filter.PackagePaths.Add("/Game");
-	//Filter.PackagePaths.Add("/Airsim");
 	Filter.bRecursivePaths = true;
 
 	TArray<FAssetData> AssetData;
@@ -424,11 +421,10 @@ UObject* UAirBlueprintLib::GetMeshFromRegistry(const std::string& load_object)
 	UObject* LoadObject = NULL;
 	for (auto asset : AssetData)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Asset path: %s"), *asset.PackagePath.ToString());
 		if (asset.AssetName == FName(load_object.c_str()))
 		{
 			LoadObject = asset.GetAsset();
-			//break;
+			break;
 		}
 	}
 	return LoadObject;
