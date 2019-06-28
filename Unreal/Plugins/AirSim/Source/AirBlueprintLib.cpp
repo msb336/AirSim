@@ -9,6 +9,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "EngineUtils.h"
 #include "Runtime/Engine/Classes/Engine/StaticMesh.h"
+#include "Runtime/Engine/Classes/Engine/LevelStreamingDynamic.h"
 #include "UObjectIterator.h"
 #include "Camera/CameraComponent.h"
 #include "Runtime/Engine/Classes/GameFramework/PlayerStart.h"
@@ -28,6 +29,9 @@ Naming conventions in this file:
 Methods -> CamelCase
 parameters -> camel_case
 */
+
+ULevelStreamingDynamic *UAirBlueprintLib::CURRENT_LEVEL = nullptr;
+
 
 bool UAirBlueprintLib::log_messages_hidden_ = false;
 msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType UAirBlueprintLib::mesh_naming_method_ =
@@ -72,16 +76,15 @@ void UAirBlueprintLib::setSimulatePhysics(AActor* actor, bool simulate_physics)
     }
 }
 
-UAirsimLevelStreaming* UAirBlueprintLib::loadLevel(UObject* context, const std::string& level_name)
+ULevelStreamingDynamic* UAirBlueprintLib::loadLevel(UObject* context, const std::string& level_name)
 {
-	static UAirsimLevelStreaming* CURRENT_LEVEL;
-	bool success;
+	bool success{ false };
 	context->GetWorld()->SetNewWorldOrigin(FIntVector(0,0,0));
-	UAirsimLevelStreaming* new_level = UAirsimLevelStreaming::LoadAirsimLevelInstance(
+	ULevelStreamingDynamic* new_level = UAirsimLevelStreaming::LoadAirsimLevelInstance(
 			context, FString(level_name.c_str()), FVector(0, 0, 0), FRotator(0, 0, 0), success);
 	if (success)
 	{
-		if(CURRENT_LEVEL->IsValidLowLevel())
+		if(CURRENT_LEVEL != nullptr && CURRENT_LEVEL->IsValidLowLevel())
 			CURRENT_LEVEL->SetShouldBeLoaded(false);
 		CURRENT_LEVEL = new_level;	
 	}
@@ -169,12 +172,6 @@ void UAirBlueprintLib::enableViewportRendering(AActor* context, bool enable)
 void UAirBlueprintLib::OnBeginPlay()
 {
     image_wrapper_module_ = &FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName("ImageWrapper"));
-	
-
-	////Load all plugin content
-	//FString path = FPaths::GameContentDir(); //FPaths::ProjectDir() + TEXT("Plugins/DlcTest/Content/");
-	//FPackageName::RegisterMountPoint(TEXT("/DlcTest/"), path);
-	//UE_LOG(LogTemp, Log, TEXT("mount /DlcTest/ path: %s"), *path);
 }
 
 void UAirBlueprintLib::OnEndPlay()
@@ -394,10 +391,28 @@ std::vector<std::string> UAirBlueprintLib::ListMatchingActors(const UObject *con
     return results;
 }
 
+TArray<FName> UAirBlueprintLib::ListWorldsInRegistry()
+{
+    FARFilter Filter;
+	Filter.ClassNames.Add(UWorld::StaticClass()->GetFName());
+	Filter.bRecursivePaths = true;
+    
+    TArray<FAssetData> AssetData;
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	AssetRegistryModule.Get().GetAssets(Filter, AssetData);
+    
+    TArray<FName> WorldNames;
+	for (auto asset : AssetData)
+        WorldNames.Add(asset.AssetName);
+	return WorldNames;
+}
+
 UObject* UAirBlueprintLib::GetMeshFromRegistry(const std::string& load_object)
 {
 	FARFilter Filter;
 	Filter.ClassNames.Add(UStaticMesh::StaticClass()->GetFName());
+	Filter.PackagePaths.Add("/Game");
+	Filter.PackagePaths.Add("/Airsim");
 	Filter.bRecursivePaths = true;
 
 	TArray<FAssetData> AssetData;
@@ -407,9 +422,10 @@ UObject* UAirBlueprintLib::GetMeshFromRegistry(const std::string& load_object)
 	UObject* LoadObject = NULL;
 	for (auto asset : AssetData)
 	{
+		UE_LOG(LogTemp, Log, TEXT("Asset path: %s"), *asset.PackagePath.ToString());
 		if (asset.AssetName == FName(load_object.c_str()))
 		{
-			LoadObject = asset.GetAsset();
+			LoadObject = asset.FastGetAsset();
 			break;
 		}
 	}

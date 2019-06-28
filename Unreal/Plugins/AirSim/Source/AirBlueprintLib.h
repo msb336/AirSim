@@ -18,13 +18,14 @@
 #include "Engine/World.h"
 #include "Runtime/Landscape/Classes/LandscapeComponent.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
-//#include "Runtime/Engine/Classes/Engine/LevelStreamingDynamic.h"
 #include "AirsimLevelStreaming.h"
 #include "Runtime/Core/Public/HAL/FileManager.h"
 #include "common/AirSimSettings.hpp"
 #include <string>
 #include <regex>
 #include "AirBlueprintLib.generated.h"
+
+class ULevelStreamingDynamic;
 
 UENUM(BlueprintType)
 enum class LogDebugLevel : uint8 {
@@ -72,8 +73,16 @@ public:
     {
         UGameplayStatics::GetAllActorsOfClass(context, T::StaticClass(), foundActors);
     }
+    
+    static ULevelStreamingDynamic *CURRENT_LEVEL;
 
     static std::vector<std::string> ListMatchingActors(const UObject *context, const std::string& name_regex);
+    UFUNCTION(BlueprintCallable, Category = "AirSim|LevelAPI")
+	static ULevelStreamingDynamic* loadLevel(UObject* context, const FString& level_name);
+	UFUNCTION(BlueprintCallable, Category = "AirSim|LevelAPI")
+    static void spawnPlayer(UObject* context, ULevelStreamingDynamic* level, bool& success);
+    UFUNCTION(BlueprintPure, Category = "AirSim|LevelAPI")
+    static TArray<FName> ListWorldsInRegistry();
 	static UAirsimLevelStreaming* loadLevel(UObject* context, const std::string& level_name);
 	static void spawnPlayer(UObject* context, bool& success);
 	static UObject* GetMeshFromRegistry(const std::string& load_object);

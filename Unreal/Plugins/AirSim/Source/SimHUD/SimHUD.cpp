@@ -34,7 +34,6 @@ void ASimHUD::BeginPlay()
 		if (simmode_)
 			simmode_->startApiServer();
 		
-		
     }
     catch (std::exception& ex) {
         UAirBlueprintLib::LogMessageString("Error at startup: ", ex.what(), LogDebugLevel::Failure);
@@ -290,10 +289,10 @@ std::string ASimHUD::getSimModeFromUser()
 
 void ASimHUD::loadLevel()
 {
-		if (AirSimSettings::singleton().level_name != "") 
-			UAirBlueprintLib::RunCommandOnGameThread([&]() {UAirBlueprintLib::loadLevel(this->GetWorld(), AirSimSettings::singleton().level_name);}, true);
-		else 
-			UAirBlueprintLib::RunCommandOnGameThread([&]() {UAirBlueprintLib::loadLevel(this->GetWorld(), "Blocks");}, true);
+	FString level_name(AirSimSettings::singleton().level_name.c_str());
+	bool success;
+	if (simmode_)
+		simmode_->current_level_ = ULevelStreamingDynamic::LoadLevelInstance(this, level_name, FVector(0,0,0), FRotator(0,0,0), success);
 }
 
 void ASimHUD::createSimMode()
