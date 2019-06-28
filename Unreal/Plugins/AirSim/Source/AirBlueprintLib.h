@@ -75,7 +75,7 @@ public:
 
     static std::vector<std::string> ListMatchingActors(const UObject *context, const std::string& name_regex);
 	static UAirsimLevelStreaming* loadLevel(UObject* context, const std::string& level_name);
-	static void spawnPlayer(UObject* context, ULevelStreamingDynamic* level, bool& success);
+	static void spawnPlayer(UObject* context, bool& success);
 	static UObject* GetMeshFromRegistry(const std::string& load_object);
 
     static bool HasObstacle(const AActor* actor, const FVector& start, const FVector& end,

@@ -26,12 +26,14 @@ void ASimHUD::BeginPlay()
         UAirBlueprintLib::OnBeginPlay();
         initializeSettings();
         setUnrealEngineSettings();
-        createSimMode();
 		loadLevel();
+        createSimMode();
+		
         createMainWidget();
         setupInputBindings();
-        if (simmode_)
-            simmode_->startApiServer();
+		if (simmode_)
+			simmode_->startApiServer();
+		
 		
     }
     catch (std::exception& ex) {
@@ -288,29 +290,10 @@ std::string ASimHUD::getSimModeFromUser()
 
 void ASimHUD::loadLevel()
 {
-	using namespace std::chrono_literals;
-	if (simmode_)
-	{
-		ULevelStreamingDynamic* level;
 		if (AirSimSettings::singleton().level_name != "") 
-			level = UAirBlueprintLib::loadLevel(simmode_->GetWorld(), AirSimSettings::singleton().level_name);
+			UAirBlueprintLib::RunCommandOnGameThread([&]() {UAirBlueprintLib::loadLevel(this->GetWorld(), AirSimSettings::singleton().level_name);}, true);
 		else 
-			level = UAirBlueprintLib::loadLevel(simmode_->GetWorld(), "Blocks");
-
-		//bool success{ false };
-		//int counter{ 10 };
-		//while (!success && counter--)
-		//{
-		//	UAirBlueprintLib::RunCommandOnGameThread([&]() {
-		//		UAirBlueprintLib::spawnPlayer(simmode_->GetWorld(), level, success);
-		//	}, true);
-		//	std::this_thread::sleep_for(1s);
-		//}
-		//if (success)
-		//{
-		//	simmode_->reset();
-		//}
-	}
+			UAirBlueprintLib::RunCommandOnGameThread([&]() {UAirBlueprintLib::loadLevel(this->GetWorld(), "Blocks");}, true);
 }
 
 void ASimHUD::createSimMode()

@@ -11,7 +11,7 @@
 #include "Runtime/Engine/Classes/Engine/StaticMesh.h"
 #include "UObjectIterator.h"
 #include "Camera/CameraComponent.h"
-//#include "Runtime/Foliage/Public/FoliageType.h"
+#include "Runtime/Engine/Classes/GameFramework/PlayerStart.h"
 #include "MessageDialog.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/SkeletalMesh.h"
@@ -76,8 +76,7 @@ UAirsimLevelStreaming* UAirBlueprintLib::loadLevel(UObject* context, const std::
 {
 	static UAirsimLevelStreaming* CURRENT_LEVEL;
 	bool success;
-	auto world_origin = UGameplayStatics::GetWorldOriginLocation(context->GetWorld());
-	UE_LOG(LogTemp, Log, TEXT("world origin %d"), world_origin[0]);
+	context->GetWorld()->SetNewWorldOrigin(FIntVector(0,0,0));
 	UAirsimLevelStreaming* new_level = UAirsimLevelStreaming::LoadAirsimLevelInstance(
 			context, FString(level_name.c_str()), FVector(0, 0, 0), FRotator(0, 0, 0), success);
 	if (success)
@@ -89,36 +88,23 @@ UAirsimLevelStreaming* UAirBlueprintLib::loadLevel(UObject* context, const std::
 	return CURRENT_LEVEL;
 }
 
-void UAirBlueprintLib::spawnPlayer(UObject* context, ULevelStreamingDynamic* level, bool& success)
+void UAirBlueprintLib::spawnPlayer(UObject* context, bool& success)
 {
-	APawn* player_pawn = UGameplayStatics::GetPlayerPawn(context, 0);
-	std::string player_start{ "" };
-	std::vector<std::string> level_spawn_list = ListMatchingActors(context, ".*[Pp]layer[Ss]tart.*");
-
-	FVector location{ 0,0,0 };
-	if (level_spawn_list.size() > 1)
+	TArray<AActor*> player_start_actors;
+	FindAllActor<APlayerStart>(context, player_start_actors);
+	if (player_start_actors.Num() > 1)
 	{
-		for (auto spawn_point_name : level_spawn_list)
+		for (auto player_start : player_start_actors)
 		{
-			if (spawn_point_name.find("PIE") == std::string::npos)
+			if (player_start->GetName() != FString("SuperStart"))
 			{
-				AActor* player_start_actor = FindActor<AActor>(context, FString(spawn_point_name.c_str()));
-				location = player_start_actor->GetActorLocation();
+				auto location = player_start->GetActorLocation();
+				context->GetWorld()->SetNewWorldOrigin(FIntVector(location.X, location.Y, location.Z-475)); // z+475 is a hacky fix for SimHUD spawn problem
 				success = true;
 				break;
 			}
 		}
 	}
-	else if (level_spawn_list.size() == 1)
-	{
-		auto player_start_actor = FindActor<AActor>(context, FString(level_spawn_list[0].c_str()));
-		location = player_start_actor->GetActorLocation();
-		success = true;
-	}
-	else
-		success = false;
-
-	context->GetWorld()->SetNewWorldOrigin(FIntVector(location.X, location.Y, location.Z));
 
 }
 

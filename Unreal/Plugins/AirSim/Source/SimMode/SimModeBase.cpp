@@ -47,6 +47,32 @@ ASimModeBase::ASimModeBase()
 
     static ConstructorHelpers::FClassFinder<AActor> sky_sphere_class(TEXT("Blueprint'/Engine/EngineSky/BP_Sky_Sphere'"));
     sky_sphere_class_ = sky_sphere_class.Succeeded() ? sky_sphere_class.Class : nullptr;
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> loading_screen_class_find(TEXT("WidgetBlueprint'/AirSim/Blueprints/BP_LoadingScreenWidget'"));
+	if (loading_screen_class_find.Succeeded())
+	{
+		auto loading_screen_class = loading_screen_class_find.Class;
+		loading_screen_widget_ = CreateWidget<ULoadingScreenWidget>(this->GetWorld(), loading_screen_class);
+
+	}
+	else
+		loading_screen_widget_ = nullptr;
+
+}
+
+void ASimModeBase::toggleLoadingScreen(bool is_visible)
+{
+
+	if (loading_screen_widget_ == nullptr)
+		return;
+	else {
+
+		if (is_visible)
+			loading_screen_widget_->SetVisibility(ESlateVisibility::Visible);
+		else
+			loading_screen_widget_->SetVisibility(ESlateVisibility::Hidden);
+	}
+
 }
 
 void ASimModeBase::BeginPlay()
@@ -89,6 +115,8 @@ void ASimModeBase::BeginPlay()
         UWeatherLib::initWeather(World, spawned_actors_);
         //UWeatherLib::showWeatherMenu(World);
     }
+	loading_screen_widget_->AddToViewport();
+	loading_screen_widget_->SetVisibility(ESlateVisibility::Hidden);
 }
 
 const NedTransform& ASimModeBase::getGlobalNedTransform()

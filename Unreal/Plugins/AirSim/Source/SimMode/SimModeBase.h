@@ -14,6 +14,7 @@
 #include "api/ApiProvider.hpp"
 #include "PawnSimApi.h"
 #include "common/StateReporterWrapper.hpp"
+#include "LoadingScreenWidget.h"
 
 #include "SimModeBase.generated.h"
 
@@ -49,6 +50,7 @@ public:
     virtual bool isPaused() const;
     virtual void pause(bool is_paused);
     virtual void continueForTime(double seconds);
+	virtual void toggleLoadingScreen(bool is_visible);
 
     virtual void setTimeOfDay(bool is_enabled, const std::string& start_datetime, bool is_start_datetime_dst,
         float celestial_clock_speed, float update_interval_secs, bool move_sun);
@@ -121,6 +123,7 @@ private:
     UPROPERTY() UClass* external_camera_class_;
     UPROPERTY() UClass* camera_director_class_;
     UPROPERTY() UClass* sky_sphere_class_;
+	UPROPERTY() ULoadingScreenWidget* loading_screen_widget_;
 
 
     UPROPERTY() AActor* sky_sphere_;

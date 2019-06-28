@@ -12,6 +12,9 @@ bool WorldSimApi::loadLevel(const std::string& level_name)
 {
 	bool success;
 	using namespace std::chrono_literals;
+	// Add loading screen to viewport
+	simmode_->toggleLoadingScreen(true);
+	pause(true);
 
 	UAirBlueprintLib::RunCommandOnGameThread([this, level_name]() {
 		this->current_level_ = UAirBlueprintLib::loadLevel(this->simmode_->GetWorld(), level_name);
@@ -25,6 +28,12 @@ bool WorldSimApi::loadLevel(const std::string& level_name)
 	}
 	else
 		success = false;
+
+	std::this_thread::sleep_for(0.5s);
+	//Remove Loading screen from viewport
+	simmode_->toggleLoadingScreen(false);
+	pause(false);
+
 	return success;
 }
 
@@ -33,14 +42,16 @@ void WorldSimApi::spawnPlayer()
 	using namespace std::chrono_literals;
 	UE_LOG(LogTemp, Log, TEXT("spawning player"));
 	bool success{ false };
-	int counter{ 3 };
+	int counter{ 10 };
 	while (!success && counter--)
 	{
 		UAirBlueprintLib::RunCommandOnGameThread([&]() {
-			UAirBlueprintLib::spawnPlayer(this->simmode_->GetWorld(), this->current_level_, success);
+			UAirBlueprintLib::spawnPlayer(this->simmode_->GetWorld(), success);
 		}, true);
 		std::this_thread::sleep_for(2s);
 	}
+	if (!success)
+		UE_LOG(LogTemp, Error, TEXT("Could not find valid PlayerStart Position"));
 
 	reset();
 }
