@@ -76,12 +76,12 @@ void UAirBlueprintLib::setSimulatePhysics(AActor* actor, bool simulate_physics)
     }
 }
 
-ULevelStreamingDynamic* UAirBlueprintLib::loadLevel(UObject* context, const std::string& level_name)
+ULevelStreamingDynamic* UAirBlueprintLib::loadLevel(UObject* context, const FString& level_name)
 {
 	bool success{ false };
 	context->GetWorld()->SetNewWorldOrigin(FIntVector(0,0,0));
 	ULevelStreamingDynamic* new_level = UAirsimLevelStreaming::LoadAirsimLevelInstance(
-			context, FString(level_name.c_str()), FVector(0, 0, 0), FRotator(0, 0, 0), success);
+			context, level_name, FVector(0, 0, 0), FRotator(0, 0, 0), success);
 	if (success)
 	{
 		if(CURRENT_LEVEL != nullptr && CURRENT_LEVEL->IsValidLowLevel())
@@ -411,8 +411,6 @@ UObject* UAirBlueprintLib::GetMeshFromRegistry(const std::string& load_object)
 {
 	FARFilter Filter;
 	Filter.ClassNames.Add(UStaticMesh::StaticClass()->GetFName());
-	Filter.PackagePaths.Add("/Game");
-	Filter.PackagePaths.Add("/Airsim");
 	Filter.bRecursivePaths = true;
 
 	TArray<FAssetData> AssetData;
@@ -425,7 +423,7 @@ UObject* UAirBlueprintLib::GetMeshFromRegistry(const std::string& load_object)
 		UE_LOG(LogTemp, Log, TEXT("Asset path: %s"), *asset.PackagePath.ToString());
 		if (asset.AssetName == FName(load_object.c_str()))
 		{
-			LoadObject = asset.FastGetAsset();
+			LoadObject = asset.GetAsset();
 			break;
 		}
 	}

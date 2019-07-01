@@ -17,7 +17,7 @@ bool WorldSimApi::loadLevel(const std::string& level_name)
 	pause(true);
 
 	UAirBlueprintLib::RunCommandOnGameThread([this, level_name]() {
-		this->current_level_ = UAirBlueprintLib::loadLevel(this->simmode_->GetWorld(), level_name);
+		this->current_level_ = UAirBlueprintLib::loadLevel(this->simmode_->GetWorld(), FString(level_name.c_str()));
 	}, true);
 
 	if (this->current_level_)

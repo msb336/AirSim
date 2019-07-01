@@ -70,5 +70,5 @@ private:
 private:
     ASimModeBase* simmode_;
     std::map<std::string, AAirSimCharacter*> chars_;
-	UAirsimLevelStreaming* current_level_;
+	ULevelStreamingDynamic* current_level_;
 };
