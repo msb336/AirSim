@@ -24,15 +24,17 @@ void ASimHUD::BeginPlay()
 
     try {
         UAirBlueprintLib::OnBeginPlay();
+		loadLevel();
         initializeSettings();
         setUnrealEngineSettings();
-		loadLevel();
         createSimMode();
 		
         createMainWidget();
         setupInputBindings();
 		if (simmode_)
+		{
 			simmode_->startApiServer();
+		}
 		
     }
     catch (std::exception& ex) {
@@ -291,7 +293,7 @@ void ASimHUD::loadLevel()
 {
 	if (AirSimSettings::singleton().level_name != "")
 		UAirBlueprintLib::RunCommandOnGameThread([&]() {UAirBlueprintLib::loadLevel(this->GetWorld(), FString(AirSimSettings::singleton().level_name.c_str()));}, true);
-	else if (simmode_)
+	else
 		UAirBlueprintLib::RunCommandOnGameThread([&]() {UAirBlueprintLib::loadLevel(this->GetWorld(), FString("Blocks"));}, true);
 }
 

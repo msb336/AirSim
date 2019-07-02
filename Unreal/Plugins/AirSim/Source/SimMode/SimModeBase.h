@@ -18,6 +18,7 @@
 
 #include "SimModeBase.generated.h"
 
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLevelLoadingStatus);
 
 UCLASS()
 class AIRSIM_API ASimModeBase : public AActor
@@ -35,6 +36,16 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Recording")
     bool toggleRecording();
 
+	UFUNCTION(BlueprintPure, Category = "Airsim | get stuff")
+		static ASimModeBase* getSimMode();
+
+	UFUNCTION(BlueprintCallable, Category = "Airsim | get stuff")
+		void toggleLoadingScreen(bool is_visible);
+
+	UFUNCTION(BlueprintCallable, Category = "Airsim | get stuff")
+		virtual void reset();
+
+
 public:	
     // Sets default values for this actor's properties
     ASimModeBase();
@@ -43,14 +54,14 @@ public:
     virtual void Tick( float DeltaSeconds ) override;
 
     //additional overridable methods
-    virtual void reset();
+    /*virtual void reset();*/
     virtual std::string getDebugReport();
     virtual ECameraDirectorMode getInitialViewMode() const;
 
     virtual bool isPaused() const;
     virtual void pause(bool is_paused);
     virtual void continueForTime(double seconds);
-	virtual void toggleLoadingScreen(bool is_visible);
+	
 
     virtual void setTimeOfDay(bool is_enabled, const std::string& start_datetime, bool is_start_datetime_dst,
         float celestial_clock_speed, float update_interval_secs, bool move_sun);
@@ -112,6 +123,7 @@ protected:
 
     UPROPERTY() UClass* pip_camera_class;
     UPROPERTY() UParticleSystem* collision_display_template;
+	
 private:
     typedef common_utils::Utils Utils;
     typedef msr::airlib::ClockFactory ClockFactory;
@@ -150,6 +162,7 @@ private:
 
     bool lidar_checks_done_ = false; 
     bool lidar_draw_debug_points_ = false;
+	static ASimModeBase* SIMMODE;
 
 private:
     void setStencilIDs();

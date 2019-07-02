@@ -26,9 +26,43 @@
 //it to AirLib and directly implement WorldSimApiBase interface
 #include "WorldSimApi.h"
 
+ASimModeBase *ASimModeBase::SIMMODE = nullptr;
+
+ASimModeBase* ASimModeBase::getSimMode()
+{
+	return SIMMODE;
+}
+
+//void ASimModeBase::toggleImportantLoadingStuff()
+//{
+//	//turn on loading screen
+//	this->toggleLoadingScreen(true);
+//
+//	//begin the spawn cycle
+//	using namespace std::chrono_literals;
+//	UE_LOG(LogTemp, Log, TEXT("spawning player"));
+//	bool success{ false };
+//	int counter{ 10 };
+//	while (!success && counter--)
+//	{
+//		UAirBlueprintLib::RunCommandOnGameThread([&]() {
+//			UAirBlueprintLib::spawnPlayer(this->GetWorld(), success);
+//		}, true);
+//		std::this_thread::sleep_for(2s);
+//	}
+//	if (!success)
+//		UE_LOG(LogTemp, Error, TEXT("Could not find valid PlayerStart Position"));
+//
+//	reset();
+//
+//	//turn off loading screen
+//	this->toggleLoadingScreen(false);
+//}
 
 ASimModeBase::ASimModeBase()
 {
+	SIMMODE = this;
+
     static ConstructorHelpers::FClassFinder<APIPCamera> external_camera_class(TEXT("Blueprint'/AirSim/Blueprints/BP_PIPCamera'"));
     external_camera_class_ = external_camera_class.Succeeded() ? external_camera_class.Class : nullptr;
     static ConstructorHelpers::FClassFinder<ACameraDirector> camera_director_class(TEXT("Blueprint'/AirSim/Blueprints/BP_CameraDirector'"));

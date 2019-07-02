@@ -19,7 +19,7 @@ public:
     virtual void StartPlay() override;
     
     AAirSimGameMode(const FObjectInitializer& ObjectInitializer);
-    
+
 //private:
     //UGameUserSettings* GetGameUserSettings();
 

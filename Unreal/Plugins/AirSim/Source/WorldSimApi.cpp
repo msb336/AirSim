@@ -46,7 +46,7 @@ void WorldSimApi::spawnPlayer()
 	while (!success && counter--)
 	{
 		UAirBlueprintLib::RunCommandOnGameThread([&]() {
-			UAirBlueprintLib::spawnPlayer(this->simmode_->GetWorld(), success);
+			success = UAirBlueprintLib::spawnPlayer(this->simmode_->GetWorld());
 		}, true);
 		std::this_thread::sleep_for(2s);
 	}

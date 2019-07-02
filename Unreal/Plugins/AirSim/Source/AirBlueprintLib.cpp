@@ -91,8 +91,9 @@ ULevelStreamingDynamic* UAirBlueprintLib::loadLevel(UObject* context, const FStr
 	return CURRENT_LEVEL;
 }
 
-void UAirBlueprintLib::spawnPlayer(UObject* context, bool& success)
+bool UAirBlueprintLib::spawnPlayer(UObject* context)
 {
+	bool success{ false };
 	TArray<AActor*> player_start_actors;
 	FindAllActor<APlayerStart>(context, player_start_actors);
 	if (player_start_actors.Num() > 1)
@@ -102,14 +103,15 @@ void UAirBlueprintLib::spawnPlayer(UObject* context, bool& success)
 			if (player_start->GetName() != FString("SuperStart"))
 			{
 				auto location = player_start->GetActorLocation();
-				context->GetWorld()->SetNewWorldOrigin(FIntVector(location.X, location.Y, location.Z-475)); // z+475 is a hacky fix for SimHUD spawn problem
+				context->GetWorld()->SetNewWorldOrigin(FIntVector(location.X, location.Y, location.Z-2975)); // z-475 is a hacky fix for SimHUD spawn problem
 				success = true;
 				break;
 			}
 		}
 	}
-
+	return success;
 }
+
 
 std::vector<UPrimitiveComponent*> UAirBlueprintLib::getPhysicsComponents(AActor* actor)
 {

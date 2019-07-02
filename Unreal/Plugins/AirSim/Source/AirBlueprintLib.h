@@ -80,7 +80,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "AirSim|LevelAPI")
 	static ULevelStreamingDynamic* loadLevel(UObject* context, const FString& level_name);
 	UFUNCTION(BlueprintCallable, Category = "AirSim|LevelAPI")
-    static void spawnPlayer(UObject* context, bool& success);
+    static bool spawnPlayer(UObject* context);
     UFUNCTION(BlueprintPure, Category = "AirSim|LevelAPI")
     static TArray<FName> ListWorldsInRegistry();
 	static UObject* GetMeshFromRegistry(const std::string& load_object);
