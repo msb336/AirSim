@@ -453,6 +453,9 @@
     <ClInclude Include="include\vehicles\multirotor\firmwares\mavlink\ArduCopterSoloParams.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\logging\OdometryLogger.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\safety\ObstacleMap.cpp">
@@ -483,6 +486,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\vehicles\multirotor\api\MultirotorApiBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\logging\OdometryLogger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
